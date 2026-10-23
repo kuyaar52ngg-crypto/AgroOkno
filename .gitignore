@@ -1,0 +1,22 @@
+# Зависимости и сборки
+node_modules/
+dist/
+web-build/
+.expo/
+*.tsbuildinfo
+
+# Секреты: публикуются только *.example
+.env
+.env.*
+!.env.example
+
+# Локальные артефакты
+media/
+docs/figma/tmp/
+*.log
+.DS_Store
+Thumbs.db
+expo-env.d.ts
+
+# Файл больше лимита GitHub (100 МБ) — хранится локально в ТЗ/
+ТЗ/Сахастат приказ формы.pdf

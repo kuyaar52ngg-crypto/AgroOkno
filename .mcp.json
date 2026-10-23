@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "agro-flow": {
+      "command": "node",
+      "args": ["tools/flow-mcp/dist/index.js"]
+    }
+  }
+}

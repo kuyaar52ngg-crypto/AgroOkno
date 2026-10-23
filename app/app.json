@@ -1,0 +1,60 @@
+{
+  "expo": {
+    "name": "АгроОкно",
+    "slug": "agro-okno",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "agrookno",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F8FAFC",
+    "ios": {
+      "icon": "./assets/images/icon.png",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "АгроОкно использует микрофон, чтобы записать голосовое сообщение помощнику."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F8FAFC",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "output": "single",
+      "favicon": "./assets/images/favicon.png",
+      "backgroundColor": "#F8FAFC"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F8FAFC",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 160
+        }
+      ],
+      "expo-sqlite",
+      "expo-font",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "АгроОкно использует микрофон, чтобы записать голосовое сообщение помощнику.",
+          "recordAudioAndroid": true
+        }
+      ],
+      "expo-notifications"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

@@ -1,0 +1,13 @@
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+!**/.env.example
+**/.git
+app/.expo
+app/assets
+app/ios
+app/android
+docs
+ТЗ
+supabase

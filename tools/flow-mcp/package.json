@@ -1,0 +1,27 @@
+{
+  "name": "agro-flow-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP-сервер АгроОкно: генерация роликов в Google Flow (через отдельный профиль Chrome) и сборка трейлера",
+  "type": "module",
+  "bin": {
+    "agro-flow-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/index.js",
+    "open": "node dist/open.js",
+    "test": "node --test dist/test/*.test.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "ffmpeg-static": "^5.3.0",
+    "playwright-core": "^1.64.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2"
+  }
+}
