@@ -12,6 +12,7 @@ import { Text } from '@/components/ui/Text';
 import { Colors } from '@/constants/theme';
 import { signUp } from '@/data';
 import { useOnboarding } from '@/hooks/onboarding';
+import { useSingleFlight } from '@/hooks/useSingleFlight';
 
 const PRIVACY_TEXT =
   'Учебная версия документа. В АгроОкно вносятся только сведения, необходимые для учета хозяйства и подготовки отчетов. Паспортные данные и СНИЛС не запрашиваются.';
@@ -39,7 +40,7 @@ export default function SignUpScreen() {
   const lengthOk = password.length >= 8;
   const mixOk = /[A-Za-zА-Яа-яЁё]/.test(password) && /\d/.test(password);
 
-  const submit = async () => {
+  const submit = useSingleFlight(async () => {
     const next: typeof errors = {};
     if (name.trim().split(/\s+/).filter(Boolean).length < 2) next.name = 'Укажите имя и фамилию';
     if (!looksLikeContact(contact)) next.contact = 'Проверьте телефон или email';
@@ -65,7 +66,7 @@ export default function SignUpScreen() {
       demoCode: result.demoCode ?? '',
     });
     router.push('/verify');
-  };
+  });
 
   return (
     <Screen

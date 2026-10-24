@@ -1,0 +1,26 @@
+{
+  "name": "agrookno-trailer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Моушн-графика трейлера АгроОкно (Remotion)",
+  "scripts": {
+    "prepare-assets": "node scripts/prepare.mjs",
+    "studio": "npm run prepare-assets && remotion studio src/index.ts",
+    "render": "npm run prepare-assets && remotion render src/index.ts Trailer ../../media/trailer/agrookno-motion.mp4 --concurrency=2",
+    "still": "npm run prepare-assets && remotion still src/index.ts Trailer ../../media/trailer/frames/motion-still.png",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.532",
+    "@remotion/fonts": "4.0.532",
+    "@remotion/transitions": "4.0.532",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "remotion": "4.0.532"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.2",
+    "typescript": "5.9.3"
+  }
+}

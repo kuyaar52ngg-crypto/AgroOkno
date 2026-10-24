@@ -13,7 +13,7 @@
 | Backend | Node.js, Fastify, TypeScript, Claude API (с правиловым fallback), STT (Yandex / OpenAI / mock), cron + Expo push | `server/` |
 | База данных | PostgreSQL 17 (Supabase): RLS, Auth, Edge Functions | `supabase/` |
 | Отчёты | Чистые TS-мапперы форм + заполнение оригинальных XLSX-бланков (exceljs), PDF (pdf-lib) | `app/src/reports`, `app/api` |
-| Демо-трейлер | MCP-сервер для Google Flow + сборка видео через ffmpeg | `tools/flow-mcp/` |
+| Демо-трейлер | Моушн-графика на Remotion (React → MP4); MCP-сервер для Google Flow + сборка через ffmpeg | `tools/trailer/`, `tools/flow-mcp/` |
 | Дизайн | Figma | `docs/figma/` |
 
 ## Формы
@@ -43,6 +43,6 @@ cd server && npm run typecheck && npm test
 - `docs/TZ-agents.md`, `docs/TZ-v2.md` — техническое задание
 - `docs/CONTRACT-CHANGES.md` — контракт между UI и слоем данных (`app/src/data/contract.ts`)
 - `docs/trailer/storyboard.md` — раскадровка трейлера
-- `server/README.md`, `tools/flow-mcp/README.md`
+- `server/README.md`, `tools/trailer/README.md`, `tools/flow-mcp/README.md`
 
 > Файл `ТЗ/Сахастат приказ формы.pdf` (129 МБ) не хранится в репозитории — он больше лимита GitHub.

@@ -10,6 +10,7 @@ import { Text } from '@/components/ui/Text';
 import { Colors, Radius } from '@/constants/theme';
 import { resendCode, verifySignUpCode } from '@/data';
 import { useOnboarding } from '@/hooks/onboarding';
+import { useSingleFlight } from '@/hooks/useSingleFlight';
 
 const RESEND_SECONDS = 42;
 
@@ -34,7 +35,7 @@ export default function VerifyScreen() {
     return () => clearTimeout(timer);
   }, [seconds]);
 
-  const confirm = async () => {
+  const confirm = useSingleFlight(async () => {
     if (code.length < 6) {
       setError('Введите все 6 цифр');
       return;
@@ -44,16 +45,18 @@ export default function VerifyScreen() {
     setPending(false);
     // При успехе пользователь в сессии: корневой layout открывает онбординг (R3).
     if (!result.ok) setError(result.message || 'Неверный код. Проверьте цифры');
-  };
+  });
 
-  const resend = async () => {
+  const resend = useSingleFlight(async () => {
     const result = await resendCode(onboarding.contact, 'signup');
-    if (result.ok) {
-      setCode(result.demoCode ?? '');
-      setError(null);
-      setSeconds(RESEND_SECONDS);
+    if (!result.ok) {
+      setError(result.message || 'Не удалось отправить код');
+      return;
     }
-  };
+    setCode(result.demoCode ?? '');
+    setError(null);
+    setSeconds(RESEND_SECONDS);
+  });
 
   return (
     <Screen
@@ -97,6 +100,7 @@ export default function VerifyScreen() {
           </Text>
         </Pressable>
       </View>
+      {onboarding.demoCode ? null : <Alert>Письмо придёт от АгроОкно в течение минуты. Если его нет во «Входящих», проверьте папку «Спам».</Alert>}
       <Alert>После подтверждения выберите роль — затем создайте хозяйство или запросите доступ.</Alert>
     </Screen>
   );

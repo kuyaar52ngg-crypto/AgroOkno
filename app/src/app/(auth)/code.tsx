@@ -10,6 +10,7 @@ import { Text } from '@/components/ui/Text';
 import { Colors, Radius } from '@/constants/theme';
 import { useAuth } from '@/data';
 import { useRecovery } from '@/hooks/recovery';
+import { useSingleFlight } from '@/hooks/useSingleFlight';
 
 const RESEND_SECONDS = 42;
 
@@ -35,7 +36,7 @@ export default function CodeScreen() {
     return () => clearTimeout(timer);
   }, [seconds]);
 
-  const confirm = async () => {
+  const confirm = useSingleFlight(async () => {
     if (code.length < 6) {
       setError('Введите все 6 цифр');
       return;
@@ -48,17 +49,19 @@ export default function CodeScreen() {
       return;
     }
     router.replace('/new-password');
-  };
+  });
 
-  const resend = async () => {
+  const resend = useSingleFlight(async () => {
     const result = await auth.requestRecovery(recovery.contact);
-    if (result.ok) {
-      recovery.setDemoCode(result.demoCode ?? '');
-      setCode(result.demoCode ?? '');
-      setError(null);
-      setSeconds(RESEND_SECONDS);
+    if (!result.ok) {
+      setError(result.message || 'Не удалось отправить код');
+      return;
     }
-  };
+    recovery.setDemoCode(result.demoCode ?? '');
+    setCode(result.demoCode ?? '');
+    setError(null);
+    setSeconds(RESEND_SECONDS);
+  });
 
   return (
     <Screen
@@ -73,7 +76,7 @@ export default function CodeScreen() {
           {recovery.maskedContact || 'Контакт не указан'}
         </Text>
         <Text variant="caption" color={Colors.textSecondaryReadable}>
-          Маскированный учебный контакт из профиля
+          {recovery.demoCode ? 'Маскированный учебный контакт из профиля' : 'Код отправлен письмом на email из профиля'}
         </Text>
       </View>
       <View style={{ gap: 8 }}>
@@ -99,7 +102,11 @@ export default function CodeScreen() {
         )}
       </View>
       <Button title="Подтвердить" onPress={confirm} loading={pending} loadingTitle="Проверяем…" />
-      <Alert>Учебный код показан для примера. Реальная отправка сообщений в макете не выполняется.</Alert>
+      <Alert>
+        {recovery.demoCode
+          ? 'Учебный код показан для примера. Реальная отправка сообщений в макете не выполняется.'
+          : 'Письмо придёт от АгроОкно в течение минуты. Если его нет во «Входящих», проверьте папку «Спам».'}
+      </Alert>
     </Screen>
   );
 }

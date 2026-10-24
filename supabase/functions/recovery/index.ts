@@ -1,8 +1,11 @@
-// Edge Function «recovery»: демо-восстановление доступа по OTP.
-// Реальной отправки email/SMS нет: код генерируется и проверяется на сервере, а в ответе
-// на action=request возвращается demoCode (UI показывает его в info-плашке «учебные данные»).
+// Edge Function «recovery»: вход / восстановление доступа по одноразовому коду.
+// Код генерируется и проверяется на сервере. Если заданы секреты Gmail (../_shared/mail.ts), код уходит письмом
+// на email из профиля (даже если человек ввёл телефон). Без секретов — демо-режим: код возвращается в ответе
+// на action=request как demoCode.
 // После верной проверки выдаётся token_hash magic-link: клиент обменивает его на сессию через verifyOtp.
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { allowResend, checkCode, issueCode } from '../_shared/codes.ts';
+import { mailEnabled, sendCode } from '../_shared/mail.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -18,11 +21,6 @@ const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE
 });
 
 const digits = (s: string) => s.replace(/\D/g, '');
-
-async function sha256(text: string) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
-}
 
 function mask(contact: string) {
   if (contact.includes('@')) {
@@ -63,28 +61,28 @@ Deno.serve(async (req) => {
     if (!profile) {
       return json({ ok: false, error: 'contact_not_found', message: 'Не нашли хозяйство с таким контактом' });
     }
-    const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000).padStart(6, '0');
-    await admin.from('recovery_codes').upsert({
-      user_id: profile.id,
-      code_hash: await sha256(`${profile.id}:${code}`),
-      expires_at: new Date(Date.now() + 10 * 60_000).toISOString(),
-      attempts: 0,
-    });
-    return json({ ok: true, maskedContact: mask(contact), demoCode: code });
+    if (mailEnabled && !profile.email) {
+      return json({ ok: false, error: 'contact_not_found', message: 'В профиле нет email, а отправка SMS пока не подключена' });
+    }
+    const issued = await issueCode(admin, profile.id);
+    // Код ушёл меньше 30 секунд назад (двойное нажатие) — он действует, второе письмо не шлём.
+    if ('retryAfter' in issued) return json({ ok: true, maskedContact: mask(mailEnabled ? profile.email! : contact) });
+    const { code } = issued;
+    if (!mailEnabled) return json({ ok: true, maskedContact: mask(contact), demoCode: code });
+    if (!(await sendCode(profile.email!, code, 'recovery'))) {
+      await allowResend(admin, profile.id);
+      return json({ ok: false, error: 'network', message: 'Не удалось отправить письмо с кодом. Попробуйте ещё раз' });
+    }
+    return json({ ok: true, maskedContact: mask(profile.email!) });
   }
 
   if (body.action === 'verify') {
     if (!profile) return json({ ok: false, error: 'contact_not_found', message: 'Не нашли хозяйство с таким контактом' });
-    const { data: row } = await admin.from('recovery_codes').select('*').eq('user_id', profile.id).maybeSingle();
-    const invalid = { ok: false, error: 'invalid_code', message: 'Неверный код. Проверьте цифры' };
-    if (!row || new Date(row.expires_at) < new Date() || row.attempts >= 5) {
-      return json({ ...invalid, message: 'Код истёк или исчерпаны попытки. Запросите новый' });
+    const verdict = await checkCode(admin, profile.id, String(body.code ?? ''));
+    if (verdict === 'expired') {
+      return json({ ok: false, error: 'invalid_code', message: 'Код истёк или исчерпаны попытки. Запросите новый' });
     }
-    if (row.code_hash !== (await sha256(`${profile.id}:${String(body.code ?? '')}`))) {
-      await admin.from('recovery_codes').update({ attempts: row.attempts + 1 }).eq('user_id', profile.id);
-      return json(invalid);
-    }
-    await admin.from('recovery_codes').delete().eq('user_id', profile.id);
+    if (verdict === 'invalid') return json({ ok: false, error: 'invalid_code', message: 'Неверный код. Проверьте цифры' });
     const { data: user } = await admin.auth.admin.getUserById(profile.id);
     const email = user?.user?.email;
     if (!email) return json({ ok: false, error: 'unknown', message: 'Учётная запись не найдена' });

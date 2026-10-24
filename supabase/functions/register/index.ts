@@ -1,9 +1,12 @@
 // Edge Function «register»: регистрация по реальному email/телефону (R1) и подтверждение кода (R2).
-// Демо-режим, как в recovery: настоящая отправка email/SMS не подключена — код генерируется и проверяется
-// на сервере, а в ответе возвращается demoCode (UI подставляет его в ячейки R2; на проде поле отсутствует).
+// Код генерируется и проверяется на сервере. Если заданы секреты Gmail (../_shared/mail.ts), код уходит письмом,
+// а регистрация доступна только по email (SMS не подключены). Без секретов — демо-режим: код возвращается
+// в ответе как demoCode (UI подставляет его в ячейки R2).
 // Технический email входа — u<случайный id>@agrookno.app: реальные контакты хранятся только в profiles,
 // а резолвер входа (RPC resolve_login_email) отдаёт наружу лишь технический адрес.
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { allowResend, checkCode, issueCode } from '../_shared/codes.ts';
+import { mailEnabled, sendCode } from '../_shared/mail.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -23,11 +26,6 @@ const fail = (error: ErrCode, message: string) => json({ ok: false, error, messa
 
 const digits = (s: string) => s.replace(/\D/g, '');
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-
-async function sha256(text: string) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
-}
 
 function mask(contact: string) {
   if (contact.includes('@')) {
@@ -59,15 +57,24 @@ async function findProfile(c: { kind: 'email' | 'phone'; value: string }) {
 
 const isStrong = (p: string) => p.length >= 8 && /[A-Za-zА-Яа-яЁё]/.test(p) && /\d/.test(p);
 
-async function issueCode(userId: string) {
-  const code = String(crypto.getRandomValues(new Uint32Array(1))[0] % 1_000_000).padStart(6, '0');
-  await admin.from('recovery_codes').upsert({
-    user_id: userId,
-    code_hash: await sha256(`${userId}:${code}`),
-    expires_at: new Date(Date.now() + 10 * 60_000).toISOString(),
-    attempts: 0,
-  });
-  return code;
+/**
+ * Ответ после выдачи кода: письмо на email или demoCode в демо-режиме. Если код ушёл меньше 30 секунд назад,
+ * регистрация (quiet) отвечает успехом без нового письма — прежний код действует; «Отправить повторно» просит подождать.
+ */
+async function deliver(userId: string, email: string | null, fallbackContact: string, quiet: boolean) {
+  if (mailEnabled && !email) return fail('contact_not_found', 'Отправка SMS пока не подключена. Укажите email');
+  const issued = await issueCode(admin, userId);
+  if ('retryAfter' in issued) {
+    if (quiet) return json({ ok: true, maskedContact: mask(email ?? fallbackContact) });
+    return fail('unknown', `Код уже отправлен. Запросить новый можно через ${issued.retryAfter} с`);
+  }
+  const { code } = issued;
+  if (!mailEnabled || !email) return json({ ok: true, maskedContact: mask(fallbackContact), demoCode: code });
+  if (!(await sendCode(email, code, 'signup'))) {
+    await allowResend(admin, userId);
+    return fail('network', 'Не удалось отправить письмо с кодом. Попробуйте ещё раз');
+  }
+  return json({ ok: true, maskedContact: mask(email) });
 }
 
 Deno.serve(async (req) => {
@@ -88,6 +95,7 @@ Deno.serve(async (req) => {
     const password = String(body.password ?? '');
     if (fullName.length < 2) return fail('unknown', 'Укажите фамилию и имя');
     if (!isStrong(password)) return fail('weak_password', 'Пароль слишком простой: не короче 8 символов, буквы и цифры');
+    if (mailEnabled && contact.kind === 'phone') return fail('contact_not_found', 'Отправка SMS пока не подключена. Укажите email');
 
     const existing = await findProfile(contact);
     let userId: string;
@@ -118,29 +126,21 @@ Deno.serve(async (req) => {
         return fail('unknown', 'Не удалось создать аккаунт. Попробуйте ещё раз');
       }
     }
-    const code = await issueCode(userId);
-    return json({ ok: true, maskedContact: mask(contact.value), demoCode: code });
+    return deliver(userId, contact.kind === 'email' ? contact.value : null, contact.value, true);
   }
 
   const profile = await findProfile(contact);
 
   if (body.action === 'resend') {
     if (!profile) return fail('contact_not_found', 'Не нашли регистрацию с таким контактом');
-    const code = await issueCode(profile.id);
-    return json({ ok: true, maskedContact: mask(contact.value), demoCode: code });
+    return deliver(profile.id, profile.email, contact.value, false);
   }
 
   if (body.action === 'verify') {
     if (!profile) return fail('contact_not_found', 'Не нашли регистрацию с таким контактом');
-    const { data: row } = await admin.from('recovery_codes').select('*').eq('user_id', profile.id).maybeSingle();
-    if (!row || new Date(row.expires_at) < new Date() || row.attempts >= 5) {
-      return fail('invalid_code', 'Код истёк или исчерпаны попытки. Запросите новый');
-    }
-    if (row.code_hash !== (await sha256(`${profile.id}:${String(body.code ?? '')}`))) {
-      await admin.from('recovery_codes').update({ attempts: row.attempts + 1 }).eq('user_id', profile.id);
-      return fail('invalid_code', 'Неверный код. Проверьте цифры');
-    }
-    await admin.from('recovery_codes').delete().eq('user_id', profile.id);
+    const verdict = await checkCode(admin, profile.id, String(body.code ?? ''));
+    if (verdict === 'expired') return fail('invalid_code', 'Код истёк или исчерпаны попытки. Запросите новый');
+    if (verdict === 'invalid') return fail('invalid_code', 'Неверный код. Проверьте цифры');
     const { data: user } = await admin.auth.admin.getUserById(profile.id);
     const email = user?.user?.email;
     if (!email) return fail('unknown', 'Учётная запись не найдена');

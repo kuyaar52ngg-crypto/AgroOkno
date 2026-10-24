@@ -12,6 +12,7 @@ import { Text } from '@/components/ui/Text';
 import { Colors, Radius } from '@/constants/theme';
 import { useAuth } from '@/data';
 import { useRecovery } from '@/hooks/recovery';
+import { useSingleFlight } from '@/hooks/useSingleFlight';
 
 /** A4 · Восстановление доступа */
 export default function RecoveryScreen() {
@@ -22,7 +23,7 @@ export default function RecoveryScreen() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  const submit = async () => {
+  const submit = useSingleFlight(async () => {
     const value = contact.trim();
     if (value.length === 0) {
       setError('Укажите телефон или email');
@@ -40,7 +41,7 @@ export default function RecoveryScreen() {
     recovery.setDemoCode(result.demoCode ?? '');
     recovery.setRecovering(true);
     router.push('/code');
-  };
+  });
 
   return (
     <Screen
@@ -72,12 +73,12 @@ export default function RecoveryScreen() {
         autoCorrect={false}
         autoComplete="email"
         error={error}
-        hint="Учебный email для демонстрации восстановления"
+        hint="Код придёт письмом на email из профиля"
         returnKeyType="go"
         onSubmitEditing={submit}
       />
       <Button title="Получить код" onPress={submit} loading={pending} loadingTitle="Отправляем…" />
-      <Alert>В демонстрационном режиме код не отправляется. Следующий экран показывает пример подтверждения.</Alert>
+      <Alert>По коду из письма вы войдёте в хозяйство и сможете задать новый пароль.</Alert>
       <Button
         title="Вернуться ко входу"
         variant="secondary"
