@@ -20,3 +20,15 @@ expo-env.d.ts
 
 # Файл больше лимита GitHub (100 МБ) — хранится локально в ТЗ/
 ТЗ/Сахастат приказ формы.pdf
+
+# Не публикуются: материалы организаторов, инструменты трейлера, промпты агентов, локальные настройки редакторов
+ТЗ/
+tools/
+.mcp.json
+docs/trailer/
+docs/agent-*.md
+docs/*-qr.png
+.claude/
+.vscode/
+app/AGENTS.md
+app/scripts/dump-*.js

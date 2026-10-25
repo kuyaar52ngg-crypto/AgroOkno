@@ -3,7 +3,7 @@
 Мобильная платформа для фермеров Республики Саха (Якутия): **«Один раз ввёл — везде сдал»**.
 Фермер (глава КФХ/ИП) или владелец ЛПХ вносит события хозяйства один раз — приложение само готовит отчётность для Росстата, Минсельхоза и Сахастата, данные для ВетИС «Меркурий» и похозяйственную книгу. Есть чат-помощник с голосовым вводом (LLM через OpenRouter, модель выбирает администратор), напоминания о сроках и демо-связка похозяйственной книги с ВетИС «Хорриот».
 
-Хакатон по кейсам ГКУ «РЦПТ РС(Я)» (письмо № 987/574 от 22.10.2026, материалы — `ТЗ/`).
+Хакатон по кейсам ГКУ «РЦПТ РС(Я)» (письмо № 987/574 от 22.10.2026).
 
 ## Стек
 
@@ -12,8 +12,8 @@
 | Мобильное приложение | Expo SDK 58, React Native 0.88, Expo Router, TypeScript, expo-sqlite (офлайн), expo-audio | `app/` |
 | Backend | Node.js, Fastify, TypeScript, OpenRouter (LLM-помощник с правиловым fallback, модель выбирает админ), STT (Yandex / OpenAI / mock), cron + Expo push | `server/` |
 | База данных | PostgreSQL 17 (Supabase): RLS, Auth, Edge Functions | `supabase/` |
+| Веб-панель администратора | Vite, React 19, TypeScript, Supabase RPC, recharts | `admin/` |
 | Отчёты | Чистые TS-мапперы форм + заполнение оригинальных XLSX-бланков (exceljs), PDF (pdf-lib) | `app/src/reports`, `app/api` |
-| Демо-трейлер | Моушн-графика на Remotion (React → MP4); MCP-сервер для Google Flow + сборка через ffmpeg | `tools/trailer/`, `tools/flow-mcp/` |
 | Дизайн | Figma | `docs/figma/` |
 
 ## Формы
@@ -40,9 +40,6 @@ cd server && npm run typecheck && npm test
 Демо-вход (учебные данные): ИНН `143512345660`, пароль `AgroOkno2026!` — ЛПХ Ивановых. Также `143500987654` (КФХ) и `143500111222` (без роли — экран выбора роли).
 
 ## Документация
-- `docs/TZ-agents.md`, `docs/TZ-v2.md` — техническое задание
+- `docs/TZ-agents.md`, `docs/TZ-v2.md`, `docs/TZ-v3.md`, `docs/TZ-admin.md` — техническое задание
 - `docs/CONTRACT-CHANGES.md` — контракт между UI и слоем данных (`app/src/data/contract.ts`)
-- `docs/trailer/storyboard.md` — раскадровка трейлера
-- `server/README.md`, `tools/trailer/README.md`, `tools/flow-mcp/README.md`
-
-> Файл `ТЗ/Сахастат приказ формы.pdf` (129 МБ) не хранится в репозитории — он больше лимита GitHub.
+- `server/README.md`, `admin/README.md`
