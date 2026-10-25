@@ -3,18 +3,17 @@
 Мобильная платформа для фермеров Республики Саха (Якутия): **«Один раз ввёл — везде сдал»**.
 Фермер (глава КФХ/ИП) или владелец ЛПХ вносит события хозяйства один раз — приложение само готовит отчётность для Росстата, Минсельхоза и Сахастата, данные для ВетИС «Меркурий» и похозяйственную книгу. Есть чат-помощник с голосовым вводом (LLM через OpenRouter, модель выбирает администратор), напоминания о сроках и демо-связка похозяйственной книги с ВетИС «Хорриот».
 
-Хакатон по кейсам ГКУ «РЦПТ РС(Я)» (письмо № 987/574 от 22.10.2026).
 
 ## Стек
 
-| Часть | Технологии | Папка |
+| Часть | Технологии |
 |---|---|---|
-| Мобильное приложение | Expo SDK 58, React Native 0.88, Expo Router, TypeScript, expo-sqlite (офлайн), expo-audio | `app/` |
-| Backend | Node.js, Fastify, TypeScript, OpenRouter (LLM-помощник с правиловым fallback, модель выбирает админ), STT (Yandex / OpenAI / mock), cron + Expo push | `server/` |
-| База данных | PostgreSQL 17 (Supabase): RLS, Auth, Edge Functions | `supabase/` |
-| Веб-панель администратора | Vite, React 19, TypeScript, Supabase RPC, recharts | `admin/` |
-| Отчёты | Чистые TS-мапперы форм + заполнение оригинальных XLSX-бланков (exceljs), PDF (pdf-lib) | `app/src/reports`, `app/api` |
-| Дизайн | Figma | `docs/figma/` |
+| Мобильное приложение | Expo SDK 58, React Native 0.88, Expo Router, TypeScript, expo-audio |
+| Backend | Node.js, Fastify, TypeScript, OpenRouter (LLM-помощник с правиловым fallback, модель выбирает админ), STT (Yandex / OpenAI / mock), cron + Expo push |
+| База данных | PostgreSQL 17 (Supabase): RLS, Auth, Edge Functions |
+| Веб-панель администратора | Vite, React 19, TypeScript, Supabase RPC, recharts |
+| Отчёты | Чистые TS-мапперы форм + заполнение оригинальных XLSX-бланков (exceljs), PDF (pdf-lib) |
+| Дизайн | Figma |
 
 ## Формы
 3-фермер (год и месяц), 1-фермер, 2-фермер, 1-КФХ, 1-ИП — по официальным бланкам; 1-ТАБУН, 10-СХ, 1-ИСО-р — превью в приложении. Отправка в ведомства, «Меркурий» и «Хорриот» — демонстрационная.
@@ -37,9 +36,3 @@ cd app && npx tsc --noEmit && npx expo lint && npm test
 cd server && npm run typecheck && npm test
 ```
 
-Демо-вход (учебные данные): ИНН `143512345660`, пароль `AgroOkno2026!` — ЛПХ Ивановых. Также `143500987654` (КФХ) и `143500111222` (без роли — экран выбора роли).
-
-## Документация
-- `docs/TZ-agents.md`, `docs/TZ-v2.md`, `docs/TZ-v3.md`, `docs/TZ-admin.md` — техническое задание
-- `docs/CONTRACT-CHANGES.md` — контракт между UI и слоем данных (`app/src/data/contract.ts`)
-- `server/README.md`, `admin/README.md`
