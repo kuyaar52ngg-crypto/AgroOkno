@@ -21,7 +21,7 @@ import type { AppNotification } from '@/data/contract';
 
 const KIND_ICON: Record<AppNotification['kind'], { icon: LucideIcon; color: string }> = {
   overdue: { icon: CircleAlert, color: Colors.error },
-  deadline: { icon: FilePenLine, color: Colors.warning },
+  deadline: { icon: FilePenLine, color: Colors.warningReadable },
   sync: { icon: RefreshCw, color: Colors.success },
   submitted: { icon: FileCheck, color: Colors.success },
   admin: { icon: Megaphone, color: Colors.primary },
@@ -93,7 +93,7 @@ export default function NotificationsScreen() {
               <Text variant="caption" color={Colors.textSecondaryReadable}>
                 {n.body}
               </Text>
-              <Text variant="caption" color={Colors.textSecondary}>
+              <Text variant="caption" color={Colors.textSecondaryReadable}>
                 {`${fmtDateOfTime(n.created_at)} · ${fmtTime(n.created_at)} · ${n.read ? 'Прочитано' : 'Новое'}`}
               </Text>
             </Pressable>

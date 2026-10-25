@@ -32,6 +32,8 @@ export const Colors = {
   surfaceInfoSoft: '#EFF3FF',
   surfaceTabs: '#E8EDF4',
   successSoftBorder: '#BBF7D0',
+  /** Рамка полей, чекбоксов и переключателей: контраст не ниже 3:1 с белым и фоном (WCAG 1.4.11). */
+  borderControl: '#7C8BA1',
 } as const;
 
 export const Radius = {

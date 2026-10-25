@@ -29,6 +29,8 @@ export interface SelectProps<T extends string = string> {
   sheetTitle?: string;
   /** Иконка слева от значения (например, календарь у выбора периода). */
   leadingIcon?: LucideIcon;
+  /** Название поля для скринридера, если видимой подписи (label) нет. */
+  accessibilityLabel?: string;
 }
 
 export function Select<T extends string = string>({
@@ -42,35 +44,40 @@ export function Select<T extends string = string>({
   disabled = false,
   sheetTitle,
   leadingIcon,
+  accessibilityLabel,
 }: SelectProps<T>) {
   const [open, setOpen] = useState(false);
   const selected = options.find((o) => o.value === value);
   return (
     <View style={styles.wrap}>
       {label ? (
-        <Text variant="label" color={disabled ? Colors.textSecondary : Colors.text}>
+        <Text variant="label" color={disabled ? Colors.textSecondaryReadable : Colors.text}>
           {label}
         </Text>
       ) : null}
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={label ? `${label}: ${selected?.label ?? placeholder}` : (selected?.label ?? placeholder)}
+        accessibilityLabel={
+          label || accessibilityLabel
+            ? `${label ?? accessibilityLabel}: ${selected?.label ?? placeholder}`
+            : (selected?.label ?? placeholder)
+        }
         accessibilityState={{ disabled, expanded: open }}
         disabled={disabled}
         onPress={() => setOpen(true)}
         style={[
           styles.field,
-          { backgroundColor: disabled ? Colors.border : Colors.surface, borderColor: error ? Colors.error : Colors.border },
+          { backgroundColor: disabled ? Colors.border : Colors.surface, borderColor: error ? Colors.error : Colors.borderControl },
         ]}
       >
         {leadingIcon ? <Icon icon={leadingIcon} size={20} color={Colors.primary} /> : null}
-        <Text variant="body" color={selected && !disabled ? Colors.text : Colors.textSecondary} style={styles.value} numberOfLines={1}>
+        <Text variant="body" color={selected && !disabled ? Colors.text : disabled ? Colors.textSecondaryReadable : Colors.textSecondary} style={styles.value}>
           {selected?.label ?? placeholder}
         </Text>
         <Icon icon={ChevronDown} size={20} color={disabled ? Colors.disabled : Colors.primary} />
       </Pressable>
       {error ? (
-        <Text variant="caption" color={Colors.textErrorReadable}>
+        <Text variant="caption" color={Colors.textErrorReadable} accessibilityRole="alert" accessibilityLiveRegion="polite">
           {error}
         </Text>
       ) : hint ? (
@@ -97,7 +104,7 @@ export function Select<T extends string = string>({
                   {option.label}
                 </Text>
                 {option.hint ? (
-                  <Text variant="caption" color={Colors.textSecondary}>
+                  <Text variant="caption" color={Colors.textSecondaryReadable}>
                     {option.hint}
                   </Text>
                 ) : null}
@@ -121,6 +128,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 14,
+    paddingVertical: 10,
   },
   value: { flex: 1 },
   option: {
@@ -130,6 +138,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
     paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 10,
   },
   optionActive: { backgroundColor: Colors.surfaceInfoSoft },

@@ -51,11 +51,11 @@ export const Input = forwardRef<ComponentRef<typeof TextInput>, InputProps>(func
   const [hidden, setHidden] = useState(true);
   const scale = useFontScale();
   const hasError = Boolean(error);
-  const borderColor = hasError ? Colors.error : focused ? Colors.primary : Colors.border;
+  const borderColor = hasError ? Colors.error : focused ? Colors.primary : Colors.borderControl;
   return (
     <View style={[styles.wrap, style]}>
       {label ? (
-        <Text variant="label" color={disabled ? Colors.textSecondary : Colors.text}>
+        <Text variant="label" color={disabled ? Colors.textSecondaryReadable : Colors.text}>
           {label}
         </Text>
       ) : null}
@@ -69,6 +69,8 @@ export const Input = forwardRef<ComponentRef<typeof TextInput>, InputProps>(func
             minHeight: minHeight ?? 52,
             alignItems: multiline ? 'flex-start' : 'center',
           },
+          // Фокус: к рамке добавляется мягкое кольцо, чтобы поле было заметно и без различения цвета рамки.
+          focused && !hasError && styles.fieldFocused,
         ]}
       >
         <TextInput
@@ -78,7 +80,7 @@ export const Input = forwardRef<ComponentRef<typeof TextInput>, InputProps>(func
           multiline={multiline}
           editable={!disabled}
           secureTextEntry={secure && hidden}
-          accessibilityLabel={label}
+          accessibilityLabel={label ?? rest.placeholder}
           accessibilityHint={hint}
           placeholderTextColor={Colors.textSecondary}
           onFocus={() => setFocused(true)}
@@ -88,7 +90,7 @@ export const Input = forwardRef<ComponentRef<typeof TextInput>, InputProps>(func
           }}
           style={[
             styles.input,
-            { fontSize: 15 * scale, color: disabled ? Colors.textSecondary : Colors.text },
+            { fontSize: 15 * scale, color: disabled ? Colors.textSecondaryReadable : Colors.text },
             multiline ? styles.multiline : null,
           ]}
         />
@@ -110,7 +112,7 @@ export const Input = forwardRef<ComponentRef<typeof TextInput>, InputProps>(func
         ) : null}
       </View>
       {error ? (
-        <Text variant="caption" color={Colors.textErrorReadable} accessibilityLiveRegion="polite">
+        <Text variant="caption" color={Colors.textErrorReadable} accessibilityRole="alert" accessibilityLiveRegion="polite">
           {error}
         </Text>
       ) : hint ? (
@@ -141,7 +143,10 @@ const styles = StyleSheet.create({
     margin: 0,
     ...NO_OUTLINE,
     minHeight: 24,
+    // Без этого на вебе поле ввода выдавливает иконку справа за край при крупном шрифте.
+    minWidth: 0,
   },
+  fieldFocused: { boxShadow: '0 0 0 3px rgba(30, 58, 138, 0.22)' },
   multiline: { minHeight: 88, textAlignVertical: 'top' },
   trailing: { alignItems: 'center', justifyContent: 'center' },
 });

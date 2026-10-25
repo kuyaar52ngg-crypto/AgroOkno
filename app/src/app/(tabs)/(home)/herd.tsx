@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Feedback';
 import { Icon } from '@/components/ui/Icon';
 import { StatCard } from '@/components/ui/Cards';
-import { Text } from '@/components/ui/Text';
+import { Text, useTextScale } from '@/components/ui/Text';
 import { daysBetween, fmtDayMonth, fmtHeads, headsWord, monthName, plural, todayIso } from '@/constants/format';
 import { Colors, Radius } from '@/constants/theme';
 import { useFarm, useHorseHerd, useReports } from '@/data';
@@ -24,10 +24,10 @@ function MovementRow({ sign, label, value, unit, last }: { sign: '+' | '−'; la
       <Text variant="small" style={{ flex: 1 }}>
         {label}
       </Text>
-      <Text variant="bodySemibold" color={positive ? Colors.success : Colors.textSecondaryReadable}>
+      <Text variant="bodySemibold" color={positive ? Colors.successReadable : Colors.textSecondaryReadable}>
         {`${sign}${value}`}
       </Text>
-      <Text variant="caption" color={Colors.textSecondary} style={{ minWidth: 52 }}>
+      <Text variant="caption" color={Colors.textSecondaryReadable} style={{ minWidth: 52 }}>
         {unit}
       </Text>
     </View>
@@ -42,6 +42,8 @@ export default function HerdScreen() {
   const year = Number(today.slice(0, 4));
   const month = Number(today.slice(5, 7));
   const herd = useHorseHerd({ year, month });
+  // Крупный текст: три карточки не помещаются в ряд — переносим.
+  const wrapStats = useTextScale() > 1.2;
   const reports = useReports(year);
   const obligation = (reports.data ?? []).find((r) => r.form_code === '1-tabun');
   const overdue = obligation?.status === 'overdue';
@@ -66,10 +68,10 @@ export default function HerdScreen() {
             ) : null}
           </View>
           <View style={{ gap: 8 }}>
-            <View style={styles.stats}>
-              <StatCard label="Всего лошадей" value={h.total} unit={headsWord(h.total)} tone="primary" />
-              <StatCard label="Кобылы" value={h.mares} unit={headsWord(h.mares)} />
-              <StatCard label="Молодняк" value={h.young} unit={headsWord(h.young)} />
+            <View style={[styles.stats, wrapStats && { flexWrap: 'wrap' }]}>
+              <StatCard label="Всего лошадей" value={h.total} unit={headsWord(h.total)} tone="primary" style={wrapStats ? styles.statWrap : undefined} />
+              <StatCard label="Кобылы" value={h.mares} unit={headsWord(h.mares)} style={wrapStats ? styles.statWrap : undefined} />
+              <StatCard label="Молодняк" value={h.young} unit={headsWord(h.young)} style={wrapStats ? styles.statWrap : undefined} />
             </View>
             <Text variant="caption" color={Colors.textSecondaryReadable}>
               {`Также в табуне: ${h.stallions} ${plural(h.stallions, ['взрослый жеребец', 'взрослых жеребца', 'взрослых жеребцов'])}`}
@@ -121,6 +123,7 @@ function monthNameGenitiveLower(month: number): string {
 const styles = StyleSheet.create({
   formRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   stats: { flexDirection: 'row', gap: 8, alignItems: 'stretch' },
+  statWrap: { flexBasis: 140 },
   moves: {
     paddingHorizontal: 16,
     borderRadius: Radius.xl,

@@ -90,7 +90,7 @@ export default function CodeScreen() {
           error={error}
         />
         {seconds > 0 ? (
-          <Text variant="caption" color={Colors.textSecondaryReadable} accessibilityLiveRegion="polite">
+          <Text variant="caption" color={Colors.textSecondaryReadable}>
             Отправить код повторно через {mmss(seconds)}
           </Text>
         ) : (

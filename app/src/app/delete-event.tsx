@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Trash2 from 'lucide-react-native/icons/trash';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { describeEntry } from '@/components/journal';
 import { Button } from '@/components/ui/Button';
@@ -61,6 +61,8 @@ export default function DeleteEventModal() {
   return (
     <View style={styles.root}>
       <Pressable accessibilityRole="button" accessibilityLabel="Закрыть без удаления" style={StyleSheet.absoluteFill} onPress={close} />
+      {/* При крупном шрифте карточка не помещается в экран — даём ей прокрутку. */}
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
       <View style={styles.card} accessibilityViewIsModal accessibilityRole="alert">
         <View style={styles.iconBox}>
           <Icon icon={Trash2} size={24} color={Colors.error} />
@@ -98,12 +100,15 @@ export default function DeleteEventModal() {
           <Button title="Удалить событие" variant="danger" onPress={confirm} loading={remove.pending} loadingTitle="Удаляем…" compact />
         </View>
       </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.overlay, alignItems: 'center', justifyContent: 'center', padding: 16 },
+  root: { flex: 1, backgroundColor: Colors.overlay },
+  scroll: { flex: 1 },
+  scrollContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 16 },
   card: {
     width: '100%',
     maxWidth: Layout.maxWidth - 32,

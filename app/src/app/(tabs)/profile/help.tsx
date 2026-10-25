@@ -56,7 +56,7 @@ export default function HelpScreen() {
               </Pressable>
               {open
                 ? item.answer.split('\n\n').map((paragraph) => (
-                    <Text key={paragraph} variant="caption" color={Colors.textSecondaryReadable} style={styles.answer}>
+                    <Text key={paragraph} variant="small" color={Colors.textSecondaryReadable} style={styles.answer}>
                       {paragraph}
                     </Text>
                   ))
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
   item: { paddingVertical: 4, gap: 4 },
   border: { borderBottomWidth: 1, borderBottomColor: Colors.border },
   question: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  answer: { lineHeight: 19, paddingBottom: 8 },
+  answer: { paddingBottom: 8 },
 });
 
 void ChevronDown;

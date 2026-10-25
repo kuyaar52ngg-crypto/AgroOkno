@@ -57,25 +57,25 @@ function CalendarGrid({ value, onSelect, maxDate, minDate }: CalendarProps) {
   return (
     <View style={styles.calendar}>
       <View style={styles.calHeader}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Предыдущий год" hitSlop={8} onPress={() => shift(-12)} style={styles.nav}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Предыдущий год" onPress={() => shift(-12)} style={styles.nav}>
           <Icon icon={ChevronsLeft} size={20} color={Colors.primary} />
         </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Предыдущий месяц" hitSlop={8} onPress={() => shift(-1)} style={styles.nav}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Предыдущий месяц" onPress={() => shift(-1)} style={styles.nav}>
           <Icon icon={ChevronLeft} size={20} color={Colors.primary} />
         </Pressable>
-        <Text variant="bodySemibold" style={styles.calTitle} align="center">
+        <Text variant="bodySemibold" style={styles.calTitle} align="center" accessibilityLiveRegion="polite">
           {monthName(view.m)} {view.y}
         </Text>
-        <Pressable accessibilityRole="button" accessibilityLabel="Следующий месяц" hitSlop={8} onPress={() => shift(1)} style={styles.nav}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Следующий месяц" onPress={() => shift(1)} style={styles.nav}>
           <Icon icon={ChevronRight} size={20} color={Colors.primary} />
         </Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Следующий год" hitSlop={8} onPress={() => shift(12)} style={styles.nav}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Следующий год" onPress={() => shift(12)} style={styles.nav}>
           <Icon icon={ChevronsRight} size={20} color={Colors.primary} />
         </Pressable>
       </View>
       <View style={styles.weekRow}>
         {WEEKDAYS.map((w) => (
-          <Text key={w} variant="caption" color={Colors.textSecondary} align="center" style={styles.cell}>
+          <Text key={w} variant="caption" color={Colors.textSecondaryReadable} align="center" style={styles.weekday}>
             {w}
           </Text>
         ))}
@@ -137,7 +137,7 @@ export function DateField({ label, value, onChange, format = 'long', hint, error
         accessibilityRole="button"
         accessibilityLabel={`${label ?? 'Дата'}: ${text}`}
         onPress={() => setOpen(true)}
-        style={[inline ? styles.inline : styles.field, !inline && { borderColor: error ? Colors.error : Colors.border }]}
+        style={[inline ? styles.inline : styles.field, !inline && { borderColor: error ? Colors.error : Colors.borderControl }]}
       >
         {inline ? (
           <Text variant="small" color={Colors.textSecondaryReadable}>
@@ -150,7 +150,7 @@ export function DateField({ label, value, onChange, format = 'long', hint, error
         <Icon icon={CalendarIcon} size={20} color={Colors.primary} />
       </Pressable>
       {error ? (
-        <Text variant="caption" color={Colors.textErrorReadable}>
+        <Text variant="caption" color={Colors.textErrorReadable} accessibilityRole="alert" accessibilityLiveRegion="polite">
           {error}
         </Text>
       ) : hint ? (
@@ -195,16 +195,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 14,
+    paddingVertical: 10,
     backgroundColor: Colors.surface,
   },
-  inline: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 10, justifyContent: 'space-between' },
+  inline: { minHeight: 44, paddingVertical: 4, flexDirection: 'row', alignItems: 'center', gap: 10, justifyContent: 'space-between' },
   value: { flex: 1 },
   calendar: { paddingBottom: 8, gap: 4 },
   calHeader: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 },
   calTitle: { flex: 1 },
-  nav: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: Colors.surfaceInfo },
+  nav: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 10, backgroundColor: Colors.surfaceInfo },
   weekRow: { flexDirection: 'row' },
-  cell: { flex: 1, height: 40, alignItems: 'center', justifyContent: 'center' },
+  cell: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  weekday: { flex: 1, minHeight: 28 },
   day: { borderRadius: 10 },
   daySelected: { backgroundColor: Colors.primary },
   dayToday: { borderWidth: 1, borderColor: Colors.primary },

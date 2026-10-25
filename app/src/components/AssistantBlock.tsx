@@ -61,7 +61,7 @@ export function AssistantBlock() {
           </View>
         )}
         <View style={styles.foot}>
-          <Text variant="caption" color={Colors.textSecondaryReadable} style={{ flex: 1 }}>
+          <Text variant="caption" color={Colors.textSecondaryReadable} style={styles.hint}>
             Напиши «Помоги с 1-ИСО-р» или используй голосовой ввод
           </Text>
           <Button title="Открыть помощника" compact onPress={() => router.push('/assistant')} style={styles.open} testID="home-assistant-open" />
@@ -82,6 +82,8 @@ const styles = StyleSheet.create({
   },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   mic: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surfaceInfoSoft },
-  foot: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  // При крупном шрифте кнопка уходит на новую строку, а не выдавливает подсказку.
+  foot: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 12 },
+  hint: { flexGrow: 1, flexBasis: 140, flexShrink: 1 },
   open: { alignSelf: 'auto', flexShrink: 0, paddingHorizontal: 20 },
 });

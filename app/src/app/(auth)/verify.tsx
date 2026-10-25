@@ -84,7 +84,7 @@ export default function VerifyScreen() {
       <Button title="Подтвердить" onPress={confirm} loading={pending} loadingTitle="Проверяем…" />
       <View style={{ alignItems: 'center', gap: 0 }}>
         {seconds > 0 ? (
-          <Text variant="small" color={Colors.textSecondaryReadable} accessibilityLiveRegion="polite" style={{ minHeight: 44, textAlignVertical: 'center', paddingTop: 12 }}>
+          <Text variant="small" color={Colors.textSecondaryReadable} style={{ minHeight: 44, textAlignVertical: 'center', paddingTop: 12 }}>
             {`Отправить код повторно через ${mmss(seconds)}`}
           </Text>
         ) : (

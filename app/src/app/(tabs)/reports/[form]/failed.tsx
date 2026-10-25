@@ -51,7 +51,7 @@ export default function ReportFailedScreen() {
       subtitle={`${name} · ошибка связи`}
       back={{ label: `К отчету ${name}`, fallback: { pathname: '/reports/[form]', params: { form } } }}
     >
-      <View style={styles.result}>
+      <View style={styles.result} accessibilityRole="alert" accessibilityLiveRegion="assertive">
         <Icon icon={WifiOff} size={32} color={Colors.error} />
         <Text variant="bodyLg" align="center" style={{ fontFamily: 'Onest_600SemiBold' }}>
           Нет ответа от сервиса

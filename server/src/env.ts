@@ -41,6 +41,11 @@ const schema = z.object({
   TZ_REGION: z.string().default('Asia/Yakutsk'),
   CORS_ORIGINS: z.string().default('*'),
   AGRO_TEMPLATES_DIR: optional,
+
+  // Необязательно: DSN проекта Sentry (@sentry/node). Без него мониторинг ошибок выключен.
+  SENTRY_DSN: optional,
+  SENTRY_ENVIRONMENT: optional,
+  SENTRY_RELEASE: optional,
 });
 
 export type Env = z.infer<typeof schema>;

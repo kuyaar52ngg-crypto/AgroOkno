@@ -5,10 +5,13 @@ import { fileURLToPath } from 'node:url';
 import { buildApp } from './app';
 import { createDeps } from './deps';
 import { EnvError, loadEnv } from './env';
+import { flushMonitoring, initMonitoring } from './monitoring';
 import { startReminderCron } from './reminders/cron';
 
 async function main() {
   const env = loadEnv();
+  // Sentry — только при заданном SENTRY_DSN; иначе ничего не происходит.
+  const monitoring = initMonitoring({ dsn: env.SENTRY_DSN, environment: env.SENTRY_ENVIRONMENT, release: env.SENTRY_RELEASE });
   // Бланки xlsx и шрифты для общих обработчиков app/api: по умолчанию ../app/templates относительно server/.
   // В собранном бандле (server/dist) каталог на уровень выше — тот же server/.
   const here = path.dirname(fileURLToPath(import.meta.url));
@@ -27,11 +30,13 @@ async function main() {
     },
   });
   logRef.current = app.log;
+  if (monitoring) app.log.info('Sentry: мониторинг ошибок включён');
 
   const task = startReminderCron(deps, app.log);
   const shutdown = async () => {
     task?.stop();
     await app.close();
+    await flushMonitoring();
     process.exit(0);
   };
   process.on('SIGINT', shutdown);
@@ -40,7 +45,8 @@ async function main() {
   await app.listen({ port: env.PORT, host: env.HOST });
 }
 
-main().catch((e) => {
+main().catch(async (e) => {
   console.error(e instanceof EnvError ? e.message : e);
+  await flushMonitoring();
   process.exit(1);
 });

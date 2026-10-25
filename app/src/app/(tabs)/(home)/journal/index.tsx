@@ -12,7 +12,7 @@ import { EventRow } from '@/components/ui/Cards';
 import { Alert, Skeleton } from '@/components/ui/Feedback';
 import { Icon } from '@/components/ui/Icon';
 import { Select } from '@/components/ui/Select';
-import { Text } from '@/components/ui/Text';
+import { Text, useTextScale } from '@/components/ui/Text';
 import { fmtHeads, fmtNum, monthName, todayIso } from '@/constants/format';
 import { EVENT_TYPE_LABEL } from '@/constants/labels';
 import { Colors, Radius } from '@/constants/theme';
@@ -38,6 +38,8 @@ function monthOptions(): { value: string; label: string }[] {
 export default function JournalScreen() {
   const router = useRouter();
   const farm = useFarm();
+  // Крупный текст: фильтры друг под другом, а не в две узкие колонки.
+  const stackFilters = useTextScale() > 1.2;
   const today = todayIso();
   const currentValue = `${Number(today.slice(0, 4))}-${Number(today.slice(5, 7))}`;
   const [period, setPeriod] = useState(currentValue);
@@ -77,12 +79,12 @@ export default function JournalScreen() {
           <Select label="Тип события" value={type} options={typeOptions} onChange={setType} />
         </View>
       ) : (
-        <View style={styles.filters}>
-          <View style={{ flex: 11 }}>
-            <Select label={undefined} value={period} options={options} onChange={setPeriod} sheetTitle="Период" />
+        <View style={[styles.filters, stackFilters && { flexDirection: 'column', alignItems: 'stretch' }]}>
+          <View style={stackFilters ? undefined : { flex: 11 }}>
+            <Select value={period} options={options} onChange={setPeriod} sheetTitle="Период" accessibilityLabel="Период" />
           </View>
-          <View style={{ flex: 9 }}>
-            <Select value={type} options={typeOptions} onChange={setType} sheetTitle="Тип события" />
+          <View style={stackFilters ? undefined : { flex: 9 }}>
+            <Select value={type} options={typeOptions} onChange={setType} sheetTitle="Тип события" accessibilityLabel="Тип события" />
           </View>
         </View>
       )}
@@ -117,7 +119,7 @@ export default function JournalScreen() {
       {empty ? (
         <>
           <View style={styles.empty}>
-            <Icon icon={BookOpen} size={28} color={Colors.textSecondary} />
+            <Icon icon={BookOpen} size={28} color={Colors.textSecondaryReadable} />
             <Text variant="bodyLg" align="center" style={{ fontFamily: 'Onest_600SemiBold' }}>
               {type !== ALL ? 'Нет событий выбранного типа' : isCurrent ? 'Пока нет событий' : `В ${monthNameLoc(month)} пока нет событий`}
             </Text>

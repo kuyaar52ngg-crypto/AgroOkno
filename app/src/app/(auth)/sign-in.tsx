@@ -97,7 +97,7 @@ export default function SignInScreen() {
           onSubmitEditing={submit}
           testID="password-input"
         />
-        <Pressable accessibilityRole="link" onPress={() => router.push('/recovery')} style={{ minHeight: 24, alignSelf: 'flex-start' }}>
+        <Pressable accessibilityRole="link" onPress={() => router.push('/recovery')} style={{ minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start' }}>
           <Text variant="small" color={Colors.primary}>
             Забыли пароль?
           </Text>

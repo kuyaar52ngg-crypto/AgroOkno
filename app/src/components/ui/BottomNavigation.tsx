@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/theme';
 
 import { Icon } from './Icon';
-import { Text } from './Text';
+import { Text, useFontScale } from './Text';
 
 export interface NavItem {
   key: string;
@@ -33,6 +33,7 @@ export interface BottomNavigationProps {
 
 export function BottomNavigation({ items, activeKey, onPress }: BottomNavigationProps) {
   const insets = useSafeAreaInsets();
+  const appScale = useFontScale();
   return (
     <View style={[styles.root, { paddingBottom: 10 + Math.max(insets.bottom, 8) }]} accessibilityRole="tablist">
       {items.map((item) => {
@@ -54,6 +55,10 @@ export function BottomNavigation({ items, activeKey, onPress }: BottomNavigation
               color={active ? Colors.primary : Colors.textSecondary}
               style={{ fontFamily: active ? 'Onest_600SemiBold' : 'Onest_400Regular' }}
               numberOfLines={1}
+              // Подписи в узкой панели: общий масштаб (настройка × система) ограничен 1,3 и подпись сжимается, а не обрезается.
+              maxFontSizeMultiplier={Math.max(1, 1.3 / appScale)}
+              adjustsFontSizeToFit
+              minimumFontScale={0.8}
             >
               {item.label}
             </Text>
@@ -73,6 +78,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Colors.border,
   },
-  item: { flex: 1, alignItems: 'center', gap: 4, minHeight: 56 },
+  item: { flex: 1, alignItems: 'center', gap: 4, minHeight: 56, paddingHorizontal: 2 },
   chip: { width: 58, height: 34, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
 });

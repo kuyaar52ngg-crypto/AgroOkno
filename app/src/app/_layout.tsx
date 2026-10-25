@@ -14,6 +14,9 @@ import { DataProvider, useAuth, useOnboardingStep, useSettings } from '@/data';
 import { OnboardingProvider, useOnboarding } from '@/hooks/onboarding';
 import { usePushRegistration } from '@/hooks/usePushRegistration';
 import { RecoveryProvider, useRecovery } from '@/hooks/recovery';
+import { initMonitoring, setMonitoringUser, wrapRoot } from '@/lib/monitoring';
+
+initMonitoring();
 
 SplashScreen.preventAutoHideAsync();
 
@@ -34,6 +37,12 @@ function AppShell() {
   const authReady = auth.status !== 'loading';
 
   usePushRegistration(inApp);
+
+  // Sentry: только id пользователя (без email, телефона и ИНН).
+  const userId = auth.profile?.id ?? null;
+  useEffect(() => {
+    setMonitoringUser(signedIn ? userId : null);
+  }, [signedIn, userId]);
 
   // Переход, отложенный до выхода из онбординга («Добавить первое событие» на R6).
   useEffect(() => {
@@ -70,7 +79,7 @@ function AppShell() {
   );
 }
 
-export default function RootLayout() {
+function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     Onest_400Regular,
     Onest_500Medium,
@@ -96,6 +105,9 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+// Без EXPO_PUBLIC_SENTRY_DSN wrapRoot возвращает компонент как есть.
+export default wrapRoot(RootLayout);
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: Platform.OS === 'web' ? Colors.border : Colors.background, alignItems: 'center' },

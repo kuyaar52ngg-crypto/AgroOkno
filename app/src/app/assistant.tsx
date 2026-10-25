@@ -214,6 +214,7 @@ export default function AssistantScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Настроить напоминания"
+              hitSlop={4}
               onPress={() => router.push('/reminders')}
               style={styles.settingsButton}
             >
@@ -330,6 +331,8 @@ export default function AssistantScreen() {
       </ScrollView>
 
       <View style={[styles.panel, { paddingBottom: 8 + Math.max(insets.bottom, 12) }]}>
+        {/* При крупном шрифте панель прокручивается и не вытесняет переписку. */}
+        <ScrollView style={styles.panelScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} bounces={false}>
         {recording ? (
           <VoicePanel elapsedMs={voice.elapsedMs} levels={voice.levels} busy={voiceBusy} onDone={finishRecording} onCancel={cancelRecording} />
         ) : (
@@ -374,6 +377,7 @@ export default function AssistantScreen() {
             ) : null}
           </View>
         )}
+        </ScrollView>
       </View>
     </KeyboardAvoidingView>
   );
@@ -424,6 +428,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Colors.border,
     backgroundColor: Colors.surface,
+    maxHeight: '60%',
   },
+  panelScroll: { flexGrow: 0 },
   actionsRow: { flexDirection: 'row', gap: 12, alignItems: 'center' },
 });

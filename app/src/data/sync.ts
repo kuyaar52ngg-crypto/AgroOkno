@@ -2,6 +2,7 @@
 //  • Запись: документы с pending = 1 отправляются upsert-ом по id (клиентские uuid), при ошибке остаются в очереди.
 //  • Чтение: pull по updated_at >= last_pulled_at для каждой таблицы; мягкие удаления применяются локально.
 //  • Конфликты: несинхронизированная локальная правка не затирается pull-ом; после отправки побеждает серверная версия.
+import { captureError } from '../lib/monitoring';
 import { supabase } from '../lib/supabase';
 import { applyDeadlineOverrides } from '../reports/deadlines';
 import { emitChange } from './bus';
@@ -200,6 +201,7 @@ export function syncNow(options: { force?: boolean } = {}): Promise<void> {
       else {
         setOnline(true);
         setLastError(String((e as { message?: string })?.message ?? e));
+        if (failures === 1) captureError(e, 'sync'); // только первая ошибка серии, без повторов на каждом ретрае
       }
     } finally {
       running = null;

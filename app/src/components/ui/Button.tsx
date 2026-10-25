@@ -47,8 +47,8 @@ export function Button({
   testID,
 }: ButtonProps) {
   const inactive = disabled && !loading;
-  const colors = inactive && variant === 'primary' ? { bg: Colors.disabled, border: Colors.disabled, text: Colors.textSecondary } : palette[variant];
-  const textColor = inactive && variant !== 'primary' ? Colors.textSecondary : colors.text;
+  const colors = inactive && variant === 'primary' ? { bg: Colors.disabled, border: Colors.disabled, text: Colors.textSecondaryReadable } : palette[variant];
+  const textColor = inactive && variant !== 'primary' ? Colors.textSecondaryReadable : colors.text;
   return (
     <Pressable
       testID={testID}
@@ -66,8 +66,8 @@ export function Button({
       ]}
     >
       <View style={styles.content}>
-        {loading ? <ActivityIndicator size="small" color={textColor} /> : icon ? <Icon icon={icon} size={20} color={textColor} /> : null}
-        <Text variant="button" color={textColor} style={styles.label}>
+        {loading ? <ActivityIndicator size="small" color={textColor} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" /> : icon ? <Icon icon={icon} size={20} color={textColor} /> : null}
+        <Text variant="bodySemibold" color={textColor} style={styles.label}>
           {loading ? loadingTitle : title}
         </Text>
       </View>
@@ -86,5 +86,5 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.85 },
   content: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  label: { fontSize: 15, lineHeight: 20, textAlign: 'center' },
+  label: { flexShrink: 1, textAlign: 'center' },
 });

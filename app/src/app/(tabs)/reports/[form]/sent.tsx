@@ -49,7 +49,7 @@ export default function ReportSentScreen() {
       subtitle={`Результат после подтверждения ${name}`}
       back={{ label: 'Мои отчеты', fallback: '/reports' }}
     >
-      <View style={styles.result}>
+      <View style={styles.result} accessibilityLiveRegion="polite">
         <View style={styles.circle}>
           <Icon icon={CircleCheck} size={28} color={Colors.success} />
         </View>

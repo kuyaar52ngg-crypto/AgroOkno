@@ -42,3 +42,8 @@ example
 /ios
 /android
 .vercel
+
+# Playwright
+/e2e/.dist/
+/playwright-report/
+/test-results/

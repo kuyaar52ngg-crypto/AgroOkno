@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import type { ComponentRef } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 import type { TextStyle } from 'react-native';
@@ -19,6 +19,8 @@ export interface OtpInputProps {
 /** 6 ячеек с автопереходом, обработкой Backspace и вставки кода целиком. */
 export function OtpInput({ value, onChange, length = 6, error, label }: OtpInputProps) {
   const refs = useRef<(ComponentRef<typeof TextInput> | null)[]>([]);
+  // Ячейка в фокусе: на вебе системную обводку убрали, фокус показываем рамкой и подложкой.
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const chars = Array.from({ length }, (_, i) => value[i] ?? '');
 
   const handleChange = (index: number, text: string) => {
@@ -43,7 +45,7 @@ export function OtpInput({ value, onChange, length = 6, error, label }: OtpInput
   return (
     <View style={styles.wrap}>
       {label ? <Text variant="label">{label}</Text> : null}
-      <View style={styles.row} accessibilityLabel={label ?? 'Код из сообщения'}>
+      <View style={styles.row}>
         {chars.map((char, index) => (
           <TextInput
             key={index}
@@ -66,8 +68,15 @@ export function OtpInput({ value, onChange, length = 6, error, label }: OtpInput
             autoComplete={index === 0 ? 'sms-otp' : 'off'}
             maxLength={length}
             selectTextOnFocus
-            accessibilityLabel={`Цифра ${index + 1} из ${length}`}
-            style={[styles.cell, { borderColor: error ? Colors.error : char ? Colors.primary : Colors.disabled }]}
+            onFocus={() => setFocusedIndex(index)}
+            onBlur={() => setFocusedIndex((current) => (current === index ? null : current))}
+            maxFontSizeMultiplier={1.3}
+            accessibilityLabel={`${label ?? 'Код из сообщения'}, цифра ${index + 1} из ${length}`}
+            style={[
+              styles.cell,
+              { borderColor: error ? Colors.error : char || focusedIndex === index ? Colors.primary : Colors.borderControl },
+              focusedIndex === index && styles.cellFocused,
+            ]}
           />
         ))}
       </View>
@@ -100,4 +109,5 @@ const styles = StyleSheet.create({
     minWidth: 0,
     width: 0,
   },
+  cellFocused: { backgroundColor: Colors.surfaceInfo, borderWidth: 2.5 },
 });

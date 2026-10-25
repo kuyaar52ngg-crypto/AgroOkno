@@ -15,7 +15,7 @@ import { SegmentedTabs } from '@/components/ui/Controls';
 import { Alert, Badge } from '@/components/ui/Feedback';
 import { Icon } from '@/components/ui/Icon';
 import { Tag } from '@/components/ui/Tag';
-import { Text } from '@/components/ui/Text';
+import { Text, useTextScale } from '@/components/ui/Text';
 import { fmtDate, fmtDateOfTime, fmtHeads, fmtNum, fmtTime, plural, todayIso } from '@/constants/format';
 import { Colors, Radius } from '@/constants/theme';
 import { useHorriot, useHorriotConnect, useHorriotRefresh } from '@/data';
@@ -57,6 +57,35 @@ function recordLabel(record: HorriotRecord): string {
 }
 
 function ReconciliationTable({ rows }: { rows: HorriotReconciliationRow[] }) {
+  // Крупный текст: четыре колонки не помещаются, поэтому показываем строки карточками «подпись: значение».
+  const stacked = useTextScale() > 1.25;
+  if (stacked) {
+    return (
+      <View>
+        {rows.map((row, index) => {
+          const mismatch = row.diff !== 0;
+          return (
+            <View
+              key={row.animal_group}
+              accessible
+              accessibilityLabel={reconciliationLabel(row)}
+              style={[styles.stackRow, index < rows.length - 1 && styles.tableBorder, mismatch && styles.tableRowMismatch]}
+            >
+              <Text variant="bodySemibold" color={mismatch ? Colors.warningReadable : Colors.text}>
+                {row.label}
+              </Text>
+              <Text variant="small" color={Colors.textSecondaryReadable}>
+                {`Книга: ${fmtNum(row.book_heads)} · Хорриот: ${fmtNum(row.horriot_heads)}`}
+              </Text>
+              <Text variant="smallMedium" color={mismatch ? Colors.warningReadable : Colors.textSecondaryReadable}>
+                {`Разница: ${fmtDiff(row.diff)}`}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+    );
+  }
   return (
     <View>
       <View style={styles.tableHead}>
@@ -343,6 +372,7 @@ const styles = StyleSheet.create({
   tableRow: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, paddingHorizontal: 8, marginHorizontal: -8 },
   tableBorder: { borderBottomWidth: 1, borderBottomColor: Colors.border },
   tableRowMismatch: { backgroundColor: Colors.surfaceWarning, borderRadius: Radius.sm },
+  stackRow: { gap: 2, paddingVertical: 10, paddingHorizontal: 8, marginHorizontal: -8 },
   colLabel: { flex: 1 },
   colNum: { width: 56 },
   okRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -356,5 +386,5 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     backgroundColor: Colors.surface,
   },
-  recordHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  recordHead: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
 });

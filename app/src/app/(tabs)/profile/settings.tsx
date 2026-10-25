@@ -135,6 +135,7 @@ export default function SettingsScreen() {
         <Text variant="small" style={{ paddingHorizontal: 8, paddingBottom: 16, lineHeight: 22 }}>
           {info ? INFO[info].text : ''}
         </Text>
+        <Button title="Закрыть" variant="secondary" compact onPress={() => setInfo(null)} style={{ marginBottom: 8 }} />
       </Sheet>
     </Screen>
   );

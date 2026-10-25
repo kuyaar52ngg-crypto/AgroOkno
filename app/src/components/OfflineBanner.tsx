@@ -24,7 +24,7 @@ export function OfflineBanner() {
   const sync = useSyncStatus();
   const [busy, setBusy] = useState(false);
   return (
-    <View style={{ gap: 8 }}>
+    <View style={{ gap: 8 }} accessibilityLiveRegion="polite">
       <Alert tone="warning" title="Вы офлайн">
         {offlineText(sync.last_synced_at, sync.pending_changes)}
       </Alert>
@@ -32,6 +32,7 @@ export function OfflineBanner() {
         accessibilityRole="button"
         accessibilityLabel="Повторить подключение"
         disabled={busy}
+        accessibilityState={{ disabled: busy, busy }}
         onPress={async () => {
           setBusy(true);
           try {

@@ -52,6 +52,8 @@ npm run dev                 # http://0.0.0.0:3001 (телефон в LAN: http:/
 | `TZ_REGION` | `Asia/Yakutsk` | часовой пояс cron и «сегодня» помощника |
 | `CORS_ORIGINS` | `*` | список источников через запятую |
 | `AGRO_TEMPLATES_DIR` | `../app/templates` | бланки xlsx и шрифты PDF (в Docker — `/app/templates`) |
+| `SENTRY_DSN` | пусто | необязательно: DSN проекта Sentry (`@sentry/node`). Пусто — мониторинг выключен, сетевых вызовов нет. Если задан, в Sentry уходят ошибки 5xx из обработчика ошибок Fastify (метод, шаблон маршрута, статус, id пользователя; без тел, заголовков и query, строки очищаются от email/телефонов/ИНН) |
+| `SENTRY_ENVIRONMENT`, `SENTRY_RELEASE` | `NODE_ENV`, пусто | необязательно: метки окружения и релиза в Sentry |
 
 Некорректный `.env` даёт понятную ошибку на русском при старте.
 

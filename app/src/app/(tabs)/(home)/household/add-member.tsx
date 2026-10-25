@@ -90,7 +90,7 @@ export default function AddMemberScreen() {
             Вносите только сведения, необходимые для учета членов хозяйства.
           </Text>
           {show('consent') ? (
-            <Text variant="caption" color={Colors.textErrorReadable}>
+            <Text variant="caption" color={Colors.textErrorReadable} accessibilityRole="alert" accessibilityLiveRegion="polite">
               {errors.consent}
             </Text>
           ) : null}

@@ -5,6 +5,7 @@ import { api } from '../api';
 import { toApiError } from '../api/errors';
 import type { ApiError } from '../api/errors';
 import type { AdminProfile, SessionInfo } from '../api/types';
+import { setMonitoringUser } from '../lib/monitoring';
 import { displayAdminEmail } from '../lib/users';
 import { AuthContext } from './AuthContext';
 import type { AuthPhase, AuthValue } from './AuthContext';
@@ -42,6 +43,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       off();
     };
   }, []);
+
+  // Sentry: только id администратора (без email).
+  useEffect(() => {
+    setMonitoringUser(userId);
+  }, [userId]);
 
   useEffect(() => {
     if (!userId) return;

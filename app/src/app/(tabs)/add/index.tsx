@@ -219,17 +219,12 @@ export default function AddEventScreen() {
                 <Text variant="label">Количество, голов</Text>
                 <Counter value={form.heads} onChange={(v) => set('heads', v)} min={1} label="Количество голов" />
                 {err('heads') ? (
-                  <Text variant="caption" color={Colors.textErrorReadable}>
+                  <Text variant="caption" color={Colors.textErrorReadable} accessibilityRole="alert" accessibilityLiveRegion="polite">
                     {err('heads')}
                   </Text>
                 ) : null}
               </View>
               <DateField label="Дата события" value={form.date} onChange={(v) => set('date', v)} maxDate={todayIso()} inline error={err('date')} />
-              {err('date') ? (
-                <Text variant="caption" color={Colors.textErrorReadable}>
-                  {err('date')}
-                </Text>
-              ) : null}
               {form.mode === 'sale' || form.mode === 'purchase' ? (
                 <>
                   <Input
@@ -361,6 +356,6 @@ export default function AddEventScreen() {
 
 const styles = StyleSheet.create({
   form: { gap: 20 },
-  pair: { flexDirection: 'row', gap: 12 },
-  half: { flex: 1 },
+  pair: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  half: { flexGrow: 1, flexBasis: 140 },
 });

@@ -147,7 +147,13 @@ export function Screen({
         </View>
       ) : null}
       {showOffline ? <OfflineBanner /> : null}
-      {loading ? (skeleton ?? <DefaultSkeleton />) : children}
+      {loading ? (
+        <View accessible accessibilityRole="progressbar" accessibilityLabel="Загрузка данных" accessibilityState={{ busy: true }}>
+          {skeleton ?? <DefaultSkeleton />}
+        </View>
+      ) : (
+        children
+      )}
     </View>
   );
 

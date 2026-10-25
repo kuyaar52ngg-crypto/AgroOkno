@@ -10,7 +10,10 @@ import './styles/layout.css';
 import { App } from './App';
 import { missingConfig } from './api/config';
 import { AuthProvider } from './auth/AuthProvider';
+import { initMonitoring } from './lib/monitoring';
 import { ToastProvider } from './ui/ToastProvider';
+
+initMonitoring();
 
 const root = createRoot(document.getElementById('root') as HTMLElement);
 const missing = missingConfig();

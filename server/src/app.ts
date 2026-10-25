@@ -9,6 +9,7 @@ import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from 'fast
 import { ApiError } from '../../app/api/_lib/context';
 import type { Deps } from './deps';
 import { HttpError } from './errors';
+import { captureServerError } from './monitoring';
 import { adminRoutes } from './routes/admin';
 import { assistantRoutes } from './routes/assistant';
 import { farmRoutes } from './routes/farms';
@@ -57,16 +58,29 @@ export async function buildApp(deps: Deps, options: FastifyServerOptions = {}): 
   });
   await app.register(swaggerUi, { routePrefix: '/docs' });
 
-  app.setErrorHandler((error: unknown, _req, reply) => {
+  app.setErrorHandler((error: unknown, req, reply) => {
     const e = error as { validation?: unknown; message?: string; statusCode?: number; code?: string; status?: number };
-    if (e instanceof HttpError) return reply.status(e.status).send({ error: e.message, ...(e.code ? { code: e.code } : {}) });
-    if (e instanceof ApiError) return reply.status(e.status).send({ error: e.message });
+    // 5xx уходят в Sentry (если включён): только метод, шаблон маршрута, статус и id пользователя — без тела, заголовков и query.
+    const report = (status: number) => {
+      if (status >= 500) captureServerError(error, { method: req.method, route: req.routeOptions?.url, status, userId: req.user?.id });
+    };
+    if (e instanceof HttpError) {
+      report(e.status);
+      return reply.status(e.status).send({ error: e.message, ...(e.code ? { code: e.code } : {}) });
+    }
+    if (e instanceof ApiError) {
+      report(e.status);
+      return reply.status(e.status).send({ error: e.message });
+    }
     if (e.validation) return reply.status(400).send({ error: `Некорректный запрос: ${e.message ?? 'проверьте поля'}`, code: 'validation' });
     if (e.code === 'FST_REQ_FILE_TOO_LARGE' || e.code === 'FST_FILES_LIMIT') {
       return reply.status(413).send({ error: 'Запись слишком большая: не больше 5 МБ и 60 секунд', code: 'too_large' });
     }
     const status = e.statusCode && e.statusCode < 500 ? e.statusCode : 500;
-    if (status >= 500) app.log.error(error);
+    if (status >= 500) {
+      app.log.error(error);
+      report(status);
+    }
     return reply.status(status).send({ error: status >= 500 ? 'Внутренняя ошибка сервера. Попробуйте ещё раз' : (e.message ?? 'Ошибка запроса') });
   });
   app.setNotFoundHandler((_req, reply) => reply.status(404).send({ error: 'Маршрут не найден' }));

@@ -55,6 +55,6 @@ const styles = StyleSheet.create({
   },
   brand: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
   back: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.surfaceInfo, alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.surfaceInfo, alignItems: 'center', justifyContent: 'center' },
   initials: { fontFamily: 'Onest_600SemiBold' },
 });

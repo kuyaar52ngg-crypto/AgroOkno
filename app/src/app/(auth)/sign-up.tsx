@@ -176,6 +176,7 @@ export default function SignUpScreen() {
         <Text variant="small" style={{ paddingHorizontal: 8, paddingBottom: 16, lineHeight: 22 }}>
           {PRIVACY_TEXT}
         </Text>
+        <Button title="Закрыть" variant="secondary" compact onPress={() => setPolicy(false)} style={{ marginBottom: 8 }} />
       </Sheet>
     </Screen>
   );

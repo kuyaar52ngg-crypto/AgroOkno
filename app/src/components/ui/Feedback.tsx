@@ -1,6 +1,6 @@
 // Обратная связь: Badge, Alert, Skeleton.
 import { useEffect, useState } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, Animated, StyleSheet, View } from 'react-native';
 import type { DimensionValue, StyleProp, ViewStyle } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import CircleAlert from 'lucide-react-native/icons/circle-alert';
@@ -21,7 +21,7 @@ export type BadgeTone = 'success' | 'draft' | 'overdue' | 'neutral';
 
 const badgeStyles: Record<BadgeTone, { bg: string; text: string; icon: string; glyph: LucideIcon }> = {
   success: { bg: Colors.surfaceSuccess, text: Colors.successReadable, icon: Colors.success, glyph: CircleCheck },
-  draft: { bg: Colors.surfaceWarning, text: Colors.warningReadable, icon: Colors.warning, glyph: FilePenLine },
+  draft: { bg: Colors.surfaceWarning, text: Colors.warningReadable, icon: Colors.warningReadable, glyph: FilePenLine },
   overdue: { bg: Colors.surfaceError, text: Colors.textErrorReadable, icon: Colors.error, glyph: CircleAlert },
   neutral: { bg: Colors.border, text: Colors.textSecondaryReadable, icon: Colors.textSecondary, glyph: Unlink },
 };
@@ -51,7 +51,7 @@ export type AlertTone = 'info' | 'success' | 'warning' | 'error';
 const alertStyles: Record<AlertTone, { bg: string; title: string; text: string; icon: string; glyph: LucideIcon }> = {
   info: { bg: Colors.surfaceInfoSoft, title: Colors.primary, text: Colors.primary, icon: Colors.primary, glyph: Info },
   success: { bg: Colors.surfaceSuccess, title: Colors.successReadable, text: Colors.successReadable, icon: Colors.success, glyph: CircleCheck },
-  warning: { bg: Colors.surfaceWarning, title: Colors.warningReadable, text: Colors.warningReadable, icon: Colors.warning, glyph: TriangleAlert },
+  warning: { bg: Colors.surfaceWarning, title: Colors.warningReadable, text: Colors.warningReadable, icon: Colors.warningReadable, glyph: TriangleAlert },
   error: { bg: Colors.surfaceError, title: Colors.textErrorReadable, text: Colors.textErrorReadable, icon: Colors.error, glyph: CircleAlert },
 };
 
@@ -102,16 +102,33 @@ export interface SkeletonProps {
 export function Skeleton({ width = '100%', height = 16, radius = 8, style }: SkeletonProps) {
   const [opacity] = useState(() => new Animated.Value(0.55));
   useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(opacity, { toValue: 1, duration: 800, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0.55, duration: 800, useNativeDriver: true }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
+    // «Уменьшить движение»: без пульсации, просто полупрозрачная заглушка.
+    let loop: Animated.CompositeAnimation | null = null;
+    let active = true;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((reduced) => {
+        if (!active || reduced) return;
+        loop = Animated.loop(
+          Animated.sequence([
+            Animated.timing(opacity, { toValue: 1, duration: 800, useNativeDriver: true }),
+            Animated.timing(opacity, { toValue: 0.55, duration: 800, useNativeDriver: true }),
+          ]),
+        );
+        loop.start();
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+      loop?.stop();
+    };
   }, [opacity]);
-  return <Animated.View style={[{ width, height, borderRadius: radius, backgroundColor: Colors.skeleton, opacity }, style]} />;
+  return (
+    <Animated.View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={[{ width, height, borderRadius: radius, backgroundColor: Colors.skeleton, opacity }, style]}
+    />
+  );
 }
 
 const styles = StyleSheet.create({

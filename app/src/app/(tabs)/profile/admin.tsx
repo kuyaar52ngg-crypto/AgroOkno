@@ -85,7 +85,7 @@ function ModelRow({ option, isPrimary, fallbackIndex, canAddFallback, onPrimary,
         onPress={onPrimary}
         style={styles.modelHead}
       >
-        <View style={[styles.radio, { borderColor: isPrimary ? Colors.primary : Colors.disabled }]}>{isPrimary ? <View style={styles.radioDot} /> : null}</View>
+        <View style={[styles.radio, { borderColor: isPrimary ? Colors.primary : Colors.borderControl }]}>{isPrimary ? <View style={styles.radioDot} /> : null}</View>
         <View style={{ flex: 1, gap: 4 }}>
           <Text variant="bodySemibold">{option.name}</Text>
           <Text variant="caption" color={Colors.textSecondaryReadable} style={{ flexShrink: 1 }}>
@@ -308,18 +308,18 @@ export default function AdminModelScreen() {
                             {i + 1}
                           </Text>
                         </View>
-                        <Text variant="small" style={{ flex: 1 }}>
+                        <Text variant="small" style={styles.fallbackName}>
                           {nameOf(id)}
                         </Text>
-                        <IconButton icon={ArrowUp} size={40} accessibilityLabel={`Выше: ${nameOf(id)}`} disabled={i === 0} onPress={() => moveFallback(i, -1)} />
+                        <IconButton icon={ArrowUp} size={44} accessibilityLabel={`Выше: ${nameOf(id)}`} disabled={i === 0} onPress={() => moveFallback(i, -1)} />
                         <IconButton
                           icon={ArrowDown}
-                          size={40}
+                          size={44}
                           accessibilityLabel={`Ниже: ${nameOf(id)}`}
                           disabled={i === current.fallbacks.length - 1}
                           onPress={() => moveFallback(i, 1)}
                         />
-                        <IconButton icon={X} size={40} accessibilityLabel={`Убрать из запасных: ${nameOf(id)}`} onPress={() => toggleFallback(id)} />
+                        <IconButton icon={X} size={44} accessibilityLabel={`Убрать из запасных: ${nameOf(id)}`} onPress={() => toggleFallback(id)} />
                       </View>
                     ))}
                   </View>
@@ -430,6 +430,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
   },
   fallbackBtnOn: { backgroundColor: Colors.surfaceInfo },
-  fallbackItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  // При крупном шрифте кнопки перемещения уходят под название.
+  fallbackItem: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
+  fallbackName: { flexGrow: 1, flexBasis: 100, flexShrink: 1 },
   order: { width: 28, height: 28, borderRadius: 14, backgroundColor: Colors.surfaceInfoSoft, alignItems: 'center', justifyContent: 'center' },
 });

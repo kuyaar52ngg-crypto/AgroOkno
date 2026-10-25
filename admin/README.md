@@ -23,6 +23,7 @@ npm run dev                      # http://127.0.0.1:5173
 | `VITE_SUPABASE_PUBLISHABLE_KEY` | Publishable-ключ Supabase (публичный; как `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`) |
 | `VITE_API_URL` | Адрес backend (`https://agro-okno-server.onrender.com`): блокировка, рассылки, модель помощника |
 | `VITE_MOCK` | Необязательно. `1` — демо-данные вместо реального API |
+| `VITE_SENTRY_DSN` | Необязательно. DSN проекта Sentry (`@sentry/react`). Не задан — мониторинг выключен: SDK не попадает в сборку и ничего не отправляется. Задан — необработанные ошибки уходят в Sentry без персональных данных (у пользователя только id, строки очищаются от email/телефонов/ИНН). Значение подставляется при сборке, на Vercel задайте его в настройках проекта и пересоберите |
 
 `.env.local` в git не попадает (см. `admin/.gitignore`); в репозитории только `.env.example`. Сервисные ключи в панель класть нельзя: всё, что требует `service_role` (блокировка, push), выполняет сервер.
 

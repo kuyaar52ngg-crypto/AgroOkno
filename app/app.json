@@ -9,6 +9,7 @@
     "userInterfaceStyle": "light",
     "backgroundColor": "#F8FAFC",
     "ios": {
+      "bundleIdentifier": "ru.agrookno.app",
       "icon": "./assets/images/icon.png",
       "supportsTablet": false,
       "infoPlist": {
@@ -16,6 +17,7 @@
       }
     },
     "android": {
+      "package": "ru.agrookno.app",
       "adaptiveIcon": {
         "backgroundColor": "#F8FAFC",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

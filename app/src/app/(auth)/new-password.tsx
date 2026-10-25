@@ -12,6 +12,8 @@ import { Colors, Radius } from '@/constants/theme';
 import { useAuth } from '@/data';
 import { useRecovery } from '@/hooks/recovery';
 
+const REQUIREMENT_STATUS = { on: 'выполнено', off: 'не выполнено' };
+
 /** A6 · Новый пароль */
 export default function NewPasswordScreen() {
   const router = useRouter();
@@ -83,9 +85,9 @@ export default function NewPasswordScreen() {
         <Text variant="label" style={{ fontSize: 13 }}>
           Требования к паролю
         </Text>
-        <CheckBox checked={lengthOk} tone="success" label="Не менее 8 символов" />
-        <CheckBox checked={mixOk} tone="success" label="Есть буквы и цифры" />
-        <CheckBox checked={matchOk} tone="success" label="Пароли совпадают" />
+        <CheckBox checked={lengthOk} tone="success" label="Не менее 8 символов" statusText={REQUIREMENT_STATUS} />
+        <CheckBox checked={mixOk} tone="success" label="Есть буквы и цифры" statusText={REQUIREMENT_STATUS} />
+        <CheckBox checked={matchOk} tone="success" label="Пароли совпадают" statusText={REQUIREMENT_STATUS} />
       </View>
       <Button title="Сохранить пароль" onPress={save} loading={pending} disabled={!valid} loadingTitle="Сохраняем…" />
       <Alert>После сохранения вернитесь ко входу и используйте новый пароль. Это демонстрационный сценарий.</Alert>

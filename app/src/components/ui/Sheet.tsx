@@ -18,12 +18,12 @@ export function Sheet({ visible, title, onClose, children }: SheetProps) {
   const insets = useSafeAreaInsets();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      <View style={styles.root}>
+      <View style={styles.root} accessibilityViewIsModal>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Закрыть" accessibilityRole="button" />
         <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-          <View style={styles.grabber} />
+          <View style={styles.grabber} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
           {title ? (
-            <Text variant="subtitle" style={styles.title}>
+            <Text variant="subtitle" style={styles.title} accessibilityRole="header">
               {title}
             </Text>
           ) : null}

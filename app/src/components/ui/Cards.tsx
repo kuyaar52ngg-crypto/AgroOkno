@@ -72,7 +72,7 @@ export function StatCard({ label, value, unit, tone = 'default', style }: StatCa
           {value}
         </Text>
         {unit ? (
-          <Text variant="small" color={primary ? Colors.onPrimaryMuted : Colors.textSecondary}>
+          <Text variant="small" color={primary ? Colors.onPrimaryMuted : Colors.textSecondaryReadable}>
             {unit}
           </Text>
         ) : null}
@@ -132,10 +132,8 @@ export function EventRow({ icon, title, meta, value, onPress, pendingSync }: Eve
     >
       <Icon icon={icon} size={24} color={Colors.primary} />
       <View style={styles.eventText}>
-        <Text variant="bodySemibold" numberOfLines={1}>
-          {title}
-        </Text>
-        <Text variant="caption" color={Colors.textSecondaryReadable} numberOfLines={1}>
+        <Text variant="bodySemibold">{title}</Text>
+        <Text variant="caption" color={Colors.textSecondaryReadable}>
           {meta}
         </Text>
       </View>
@@ -179,7 +177,7 @@ export function ListRow({ title, subtitle, value, icon, onPress, destructive = f
         ) : null}
       </View>
       {value ? (
-        <Text variant="small" color={Colors.textSecondaryReadable}>
+        <Text variant="small" color={Colors.textSecondaryReadable} align="right" style={styles.rowValue}>
           {value}
         </Text>
       ) : null}
@@ -245,7 +243,7 @@ export function ReportCard({ title, description, status, meta, onPress }: Report
         {description}
       </Text>
       <View style={styles.reportFoot}>
-        <Text variant="caption" color={overdue ? Colors.error : Colors.textSecondaryReadable} style={styles.reportMeta}>
+        <Text variant="caption" color={overdue ? Colors.textErrorReadable : Colors.textSecondaryReadable} style={styles.reportMeta}>
           {meta}
         </Text>
         <Icon icon={ArrowRight} size={16} color={Colors.primary} />
@@ -393,6 +391,7 @@ const styles = StyleSheet.create({
   },
   eventText: { flex: 1, gap: 2 },
   rowText: { flex: 1, gap: 2 },
+  rowValue: { flexShrink: 1, maxWidth: '45%' },
   listGroup: {
     borderRadius: Radius.xl,
     borderWidth: 1,
@@ -413,7 +412,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     alignSelf: 'stretch',
   },
-  reportHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  reportHead: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   reportTitle: { fontFamily: 'Onest_600SemiBold', flexShrink: 1 },
   reportFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   reportMeta: { flexShrink: 1 },

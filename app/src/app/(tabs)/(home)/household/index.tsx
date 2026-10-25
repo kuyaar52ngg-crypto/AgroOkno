@@ -56,7 +56,7 @@ function HerdList({ rows, onAdjust }: { rows: HerdRow[]; onAdjust: (row: HerdRow
     <View style={styles.herd}>
       {rows.map((row, index) => (
         <View key={row.key} style={[styles.herdRow, index < rows.length - 1 && styles.herdBorder]}>
-          <View style={{ flex: 1, gap: 2 }}>
+          <View style={styles.herdLabel}>
             <Text variant="bodySemibold">{row.label}</Text>
             <Text variant="caption" color={Colors.textSecondaryReadable}>
               {row.hint}
@@ -264,7 +264,9 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     backgroundColor: Colors.surface,
   },
-  herdRow: { minHeight: 72, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
+  // При крупном шрифте счётчик уходит под название строки.
+  herdRow: { minHeight: 72, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 12, paddingVertical: 12 },
+  herdLabel: { flexGrow: 1, flexBasis: 140, flexShrink: 1, gap: 2 },
   herdBorder: { borderBottomWidth: 1, borderBottomColor: Colors.border },
   member: { flexDirection: 'row', gap: 12, alignItems: 'center' },
 });

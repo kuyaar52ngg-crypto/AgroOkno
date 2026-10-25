@@ -55,6 +55,7 @@ export function Composer({ value, onChangeText, onSend, onMic, placeholder = 'Н
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Отправить"
+            accessibilityState={{ disabled }}
             disabled={disabled}
             onPress={onSend}
             style={({ pressed }) => [styles.action, pressed && { opacity: 0.85 }, disabled && { opacity: 0.6 }]}
@@ -140,7 +141,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: Colors.borderControl,
     backgroundColor: Colors.surface,
   },
   input: {
