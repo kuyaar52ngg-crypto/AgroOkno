@@ -44,6 +44,13 @@ export async function createPdf(title: string): Promise<PdfCtx> {
   return ctx;
 }
 
+/** Если до нижнего поля не хватает места под блок высотой h — начинает новую страницу. */
+export function ensureSpace(ctx: PdfCtx, h: number): void {
+  if (ctx.y - h >= MARGIN) return;
+  ctx.page = ctx.doc.addPage(A4);
+  ctx.y = A4[1] - MARGIN;
+}
+
 export function heading(ctx: PdfCtx, text: string, size = 20): void {
   const w = ctx.bold.widthOfTextAtSize(text, size);
   ctx.page.drawText(text, { x: Math.max(MARGIN, (A4[0] - w) / 2), y: ctx.y, size, font: ctx.bold, color: INK });
@@ -62,6 +69,7 @@ export function rule(ctx: PdfCtx): void {
 }
 
 export function sectionTitle(ctx: PdfCtx, text: string): void {
+  ensureSpace(ctx, 60); // заголовок не остаётся один внизу страницы
   ctx.y -= 6;
   ctx.page.drawText(text, { x: MARGIN, y: ctx.y, size: 12.5, font: ctx.bold, color: INK });
   ctx.y -= 20;
@@ -70,6 +78,7 @@ export function sectionTitle(ctx: PdfCtx, text: string): void {
 /** Строка «подпись — значение» (значение прижато вправо). */
 export function pair(ctx: PdfCtx, label: string, value: string): void {
   const size = 11.5;
+  ensureSpace(ctx, 30);
   ctx.page.drawText(label, { x: MARGIN, y: ctx.y, size, font: ctx.regular, color: MUTED });
   const w = ctx.bold.widthOfTextAtSize(value, size);
   ctx.page.drawText(value, { x: A4[0] - MARGIN - w, y: ctx.y, size, font: ctx.bold, color: INK });
@@ -84,20 +93,59 @@ export function paragraph(ctx: PdfCtx, text: string, opts: { size?: number; mute
   const f = ctx.regular;
   const maxWidth = A4[0] - 2 * MARGIN;
   const words = text.split(/\s+/);
+  const lines: string[] = [];
   let line = '';
-  const flush = () => {
-    ctx.page.drawText(line, { x: MARGIN, y: ctx.y, size, font: f, color: opts.muted ? MUTED : INK });
-    ctx.y -= size + 5;
-  };
   for (const word of words) {
     const next = line ? `${line} ${word}` : word;
     if (f.widthOfTextAtSize(next, size) > maxWidth && line) {
-      flush();
+      lines.push(line);
       line = word;
     } else line = next;
   }
-  if (line) flush();
+  if (line) lines.push(line);
+  ensureSpace(ctx, lines.length * (size + 5)); // абзац целиком на одной странице
+  for (const l of lines) {
+    ctx.page.drawText(l, { x: MARGIN, y: ctx.y, size, font: f, color: opts.muted ? MUTED : INK });
+    ctx.y -= size + 5;
+  }
   ctx.y -= 4;
+}
+
+export interface TableColumn {
+  title: string;
+  /** Доля ширины таблицы (сумма долей = 1). */
+  width: number;
+  align?: 'left' | 'right';
+}
+
+/** Таблица: строка заголовков, затем строки значений; числовые колонки прижаты вправо. Последняя строка может быть итоговой. */
+export function table(ctx: PdfCtx, columns: TableColumn[], rows: string[][], opts: { totalRow?: boolean } = {}): void {
+  const size = 11;
+  const total = A4[0] - 2 * MARGIN;
+  const edges: number[] = [];
+  let acc = MARGIN;
+  for (const c of columns) {
+    edges.push(acc);
+    acc += c.width * total;
+  }
+  const drawRow = (cells: string[], font: PDFFont, color: ReturnType<typeof rgb>, fontSize: number) => {
+    cells.forEach((text, i) => {
+      const col = columns[i]!;
+      const left = edges[i]!;
+      const right = left + col.width * total;
+      const w = font.widthOfTextAtSize(text, fontSize);
+      ctx.page.drawText(text, { x: col.align === 'right' ? right - w : left, y: ctx.y, size: fontSize, font, color });
+    });
+    ctx.y -= 8;
+    rule(ctx); // линия под строкой, шаг строки 18
+  };
+  ensureSpace(ctx, 70);
+  drawRow(columns.map((c) => c.title), ctx.bold, MUTED, 10);
+  rows.forEach((cells, index) => {
+    ensureSpace(ctx, 30);
+    const isTotal = opts.totalRow === true && index === rows.length - 1;
+    drawRow(cells, isTotal ? ctx.bold : ctx.regular, INK, size);
+  });
 }
 
 export async function finish(ctx: PdfCtx): Promise<Buffer> {

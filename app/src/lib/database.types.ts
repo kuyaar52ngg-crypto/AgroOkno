@@ -56,12 +56,15 @@ export interface Tables {
     id: string; farm_id: string; number: string; product: string; quantity: number; unit: string; status: 'issued' | 'redeemed'; issued_on: string;
     produced_on: string | null; sender: string; recipient: string; source_kind: 'product_sale' | 'livestock' | null; source_id: string | null;
   };
-  notifications: SyncCols & { id: string; farm_id: string; kind: 'overdue' | 'deadline' | 'sync' | 'submitted'; title: string; body: string; form_code: string | null; read: boolean };
+  notifications: SyncCols & { id: string; farm_id: string; kind: 'overdue' | 'deadline' | 'sync' | 'submitted' | 'admin'; title: string; body: string; form_code: string | null; read: boolean };
   user_settings: SyncCols & {
     user_id: string; push_enabled: boolean; deadline_reminders: boolean; sound: boolean; text_size: 'standard' | 'large';
     reminders_in_chat: boolean; remind_7_days: boolean; remind_1_day: boolean;
   };
-  support_tickets: SyncCols & { id: string; farm_id: string; number: string; topic: string; related_section: string | null; message: string; attachment_uri: string | null };
+  support_tickets: SyncCols & {
+    id: string; farm_id: string; number: string; topic: string; related_section: string | null; message: string; attachment_uri: string | null;
+    status: SupportTicketStatusDb; admin_reply: string | null; replied_at: string | null; replied_by: string | null;
+  };
   farm_members: { farm_id: string; user_id: string; role: 'owner' | 'member'; created_at: string };
   farm_join_requests: {
     id: string; farm_id: string; user_id: string; farm_name: string; farm_settlement: string | null; contact: string | null;
@@ -73,6 +76,74 @@ export interface Tables {
     id: string; farm_id: string; user_id: string; role: 'user' | 'assistant'; text: string; cards: Json | null; from_voice: boolean;
   };
   recovery_codes: { user_id: string; code_hash: string; expires_at: string; attempts: number };
+  horriot_connections: SyncCols & { farm_id: string; status: 'not_connected' | 'connected_demo'; synced_at: string | null };
+  horriot_records: SyncCols & {
+    id: string; farm_id: string; number: string; kind: 'registration' | 'disposal'; animal_group: LivestockGroupDb; heads: number; reason: string;
+    registered_on: string; source_movement_id: string | null;
+  };
+  app_admins: { email: string; user_id: string | null; created_at: string };
+  app_settings: { key: string; value: Json; updated_at: string; updated_by: string | null };
+  admin_audit_log: {
+    id: string; admin_id: string | null; admin_email: string | null; action: string; target_type: string | null; target_id: string | null;
+    details: Json | null; created_at: string;
+  };
+  admin_broadcasts: {
+    id: string; title: string; body: string; target: AdminBroadcastTarget; farms_count: number; push_sent: number;
+    created_by: string | null; created_by_email: string | null; created_at: string;
+  };
+}
+
+// ─── Админ-панель (RPC admin_*, миграция 20261025010000_admin_panel) ────────
+
+export type SupportTicketStatusDb = 'new' | 'in_progress' | 'answered' | 'closed';
+export type AdminBroadcastTarget = { target: 'all' | 'status' | 'farms'; status: FarmKind | null; farm_ids: string[] | null };
+
+export interface AdminUser {
+  id: string; full_name: string | null; email: string | null; phone: string | null; role: UserRoleDb | null; settlement: string | null;
+  created_at: string; last_sign_in_at: string | null; banned_until: string | null; is_admin: boolean; farms_count: number;
+}
+export interface AdminUserDetails extends AdminUser {
+  farms: { id: string; name: string; inn: string | null; legal_status: FarmKind; member_role: 'owner' | 'member' }[];
+  tickets: { id: string; number: string; topic: string; status: SupportTicketStatusDb; created_at: string }[];
+  events_30d: number;
+}
+export interface AdminFarm {
+  id: string; name: string; inn: string | null; legal_status: FarmKind; region: string | null; settlement: string | null;
+  owner: { id: string; full_name: string | null; email: string | null }; members_count: number; created_at: string;
+  last_activity_at: string | null; mercury_status: 'not_connected' | 'connected_demo'; horriot_status: 'not_connected' | 'connected_demo';
+  reports_submitted: number;
+}
+export interface AdminFarmDetails extends AdminFarm {
+  address: string | null; ogrn: string | null; oktmo: string | null; book_record_no: string | null; invite_code: string | null;
+  members: { user_id: string; full_name: string | null; email: string | null; role: 'owner' | 'member' }[];
+  join_requests: { id: string; user_id: string; full_name: string | null; status: 'pending' | 'approved' | 'rejected'; created_at: string }[];
+  submissions: { id: string; form_code: string; period_year: number; period_month: number | null; receipt_no: string | null; submitted_at: string | null }[];
+}
+export interface AdminStats {
+  users_total: number; users_new: number; farms_total: number; farms_by_status: { kfh: number; ip: number; lph: number };
+  events_count: number; reports_by_form: { form_code: string; count: number }[]; mercury_connected: number; horriot_connected: number;
+  assistant_messages: number; open_tickets: number; daily: { date: string; events: number; new_users: number }[];
+}
+export interface AdminSubmission {
+  id: string; farm_id: string; farm_name: string; inn: string | null; form_code: string; period_year: number; period_month: number | null;
+  status: 'draft' | 'submitted' | 'failed'; recipient: string | null; receipt_no: string | null; submitted_at: string | null;
+}
+export interface AdminTicket {
+  id: string; number: string; topic: string; related_section: string | null; message: string; status: SupportTicketStatusDb;
+  admin_reply: string | null; replied_at: string | null; replied_by: string | null; created_at: string; farm_id: string; farm_name: string;
+  user_full_name: string | null; user_email: string | null;
+}
+export interface AdminBroadcast {
+  id: string; title: string; body: string; target: AdminBroadcastTarget; farms_count: number; push_sent: number;
+  created_by: string | null; created_by_email: string | null; created_at: string;
+}
+export interface AdminAuditItem {
+  id: string; admin_id: string | null; admin_email: string | null; action: string; target_type: string | null; target_id: string | null;
+  details: Json | null; created_at: string;
+}
+export interface AdminPage<T> {
+  total: number;
+  items: T[];
 }
 
 export interface Functions {
@@ -91,4 +162,28 @@ export interface Functions {
   resolve_join_request: { Args: { p_id: string; p_approve: boolean }; Returns: Tables['farm_join_requests'] };
   resolve_login_email: { Args: { p_identifier: string }; Returns: string };
   register_push_token: { Args: { p_token: string; p_platform: string }; Returns: void };
+  is_app_admin: { Args: Record<string, never>; Returns: boolean };
+  /** { model, fallback_models, updated_at, updated_by } — формат AssistantModelSettings. */
+  get_assistant_model_settings: { Args: Record<string, never>; Returns: Json };
+  set_assistant_model_settings: { Args: { p_model: string; p_fallbacks?: string[] }; Returns: Json };
+  // Админ-панель: все RPC — только is_app_admin() (иначе 42501), изменяющие пишут admin_audit_log. Даты периода — Asia/Yakutsk.
+  admin_stats: { Args: { p_from?: string | null; p_to?: string | null }; Returns: AdminStats };
+  admin_list_users: { Args: { p_search?: string | null; p_limit?: number; p_offset?: number }; Returns: AdminPage<AdminUser> };
+  admin_get_user: { Args: { p_user_id: string }; Returns: AdminUserDetails };
+  admin_set_admin: { Args: { p_user_id: string; p_grant: boolean }; Returns: AdminUser };
+  admin_list_farms: { Args: { p_search?: string | null; p_status?: FarmKind | null; p_limit?: number; p_offset?: number }; Returns: AdminPage<AdminFarm> };
+  admin_get_farm: { Args: { p_farm_id: string }; Returns: AdminFarmDetails };
+  admin_list_submissions: {
+    Args: { p_form?: string | null; p_year?: number | null; p_search?: string | null; p_limit?: number; p_offset?: number };
+    Returns: AdminPage<AdminSubmission>;
+  };
+  admin_update_deadline: { Args: { p_form_code: string; p_patch: Json }; Returns: Tables['report_deadlines'] };
+  admin_list_tickets: { Args: { p_status?: SupportTicketStatusDb | null; p_search?: string | null; p_limit?: number; p_offset?: number }; Returns: AdminPage<AdminTicket> };
+  admin_reply_ticket: { Args: { p_ticket_id: string; p_reply?: string | null; p_status?: SupportTicketStatusDb | null }; Returns: AdminTicket };
+  admin_broadcast: {
+    Args: { p_title: string; p_body: string; p_target: 'all' | 'status' | 'farms'; p_status?: FarmKind | null; p_farm_ids?: string[] | null };
+    Returns: { broadcast_id: string; farms_count: number; user_ids: string[] };
+  };
+  admin_list_broadcasts: { Args: { p_limit?: number; p_offset?: number }; Returns: AdminPage<AdminBroadcast> };
+  admin_list_audit: { Args: { p_action?: string | null; p_limit?: number; p_offset?: number }; Returns: AdminPage<AdminAuditItem> };
 }

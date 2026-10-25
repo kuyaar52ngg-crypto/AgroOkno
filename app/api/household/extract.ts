@@ -8,7 +8,7 @@ export const GET = (request: Request) =>
   guard(async () => {
     const farmId = parseFarmId(new URL(request.url));
     const supabase = userClient(bearerToken(request));
-    const data = await loadFarmData(supabase, farmId);
+    const data = await loadFarmData(supabase, farmId, { horriot: true });
     const today = todayInYakutsk();
     return pdfResponse(await buildExtractPdf(data, today), `vypiska-${today}.pdf`);
   });

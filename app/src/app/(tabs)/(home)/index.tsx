@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { BookOpen, ChevronRight, CircleAlert, CircleCheck, CirclePlus, FilePenLine, Milk, RefreshCw, ShieldCheck, Sprout, Wheat } from 'lucide-react-native';
+import { BookOpen, Carrot, ChevronRight, CircleAlert, CircleCheck, CirclePlus, FilePenLine, Milk, PawPrint, RefreshCw, ShieldCheck, Sprout, Wheat } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AssistantBlock } from '@/components/AssistantBlock';
@@ -28,7 +28,7 @@ function HomeSkeleton() {
       </View>
       <Skeleton height={20} width="40%" />
       <View style={{ gap: 12 }}>
-        {[0, 1].map((r) => (
+        {[0, 1, 2].map((r) => (
           <View key={r} style={styles.row}>
             {[0, 1].map((c) => (
               <View key={c} style={styles.skeletonCard}>
@@ -246,7 +246,16 @@ export default function HomeScreen() {
                   description="Сено, сенаж и зерно"
                   onPress={() => router.navigate({ pathname: '/add', params: { tab: 'feed' } })}
                 />
+                <QuickAction
+                  icon={Carrot}
+                  title="Урожай"
+                  description="Картофель и овощи"
+                  onPress={() => router.navigate({ pathname: '/add', params: { tab: 'crop' } })}
+                />
+              </View>
+              <View style={styles.row}>
                 <QuickAction icon={ShieldCheck} title="ВетИС Меркурий" description="Ветеринарный учет" onPress={() => router.push('/mercury')} />
+                <QuickAction icon={PawPrint} title="ВетИС Хорриот" description="Учет животных" onPress={() => router.push('/horriot')} />
               </View>
             </View>
           </View>

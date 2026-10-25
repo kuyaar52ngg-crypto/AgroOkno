@@ -5,6 +5,7 @@ import { after, before, describe, it } from 'node:test';
 import type { FastifyInstance } from 'fastify';
 
 import { buildApp } from '../src/app';
+import { createModelCatalog, createModelSettingsStore } from '../src/assistant/models';
 import { createAssistantService } from '../src/assistant/service';
 import { rulesEngine } from '../src/assistant/rules';
 import type { Deps } from '../src/deps';
@@ -34,6 +35,8 @@ function makeDeps(stt: SttProvider = createSttProvider(env)): Deps {
       service: () => db.client(),
     },
     assistant: createAssistantService(rulesEngine, { warn() {} }, () => new Date('2026-10-23T05:00:00Z')),
+    modelSettings: createModelSettingsStore({ defaultModel: env.OPENROUTER_MODEL }),
+    modelCatalog: createModelCatalog({ fetchImpl: (async () => new Response('{}', { status: 503 })) as typeof fetch }),
     stt,
     push: { send: async () => [] },
     clock: () => new Date('2026-10-23T05:00:00Z'),
@@ -69,13 +72,17 @@ describe('HTTP API', () => {
     const body = res.json();
     assert.equal(body.ok, true);
     assert.deepEqual([body.providers.llm, body.providers.stt], ['rules', 'mock']);
+    assert.equal(body.model, null, 'без ключа OpenRouter модель не используется');
   });
 
   it('GET /docs/json — OpenAPI с маршрутами /v1', async () => {
     const res = await app.inject('/docs/json');
     assert.equal(res.statusCode, 200);
     const paths = Object.keys(res.json().paths);
-    for (const p of ['/v1/assistant/messages', '/v1/assistant/transcribe', '/v1/reminders/run', '/v1/push-tokens', '/v1/farms/lookup', '/v1/farms/join-requests', '/v1/reports/3-fermer']) {
+    for (const p of [
+      '/v1/assistant/messages', '/v1/assistant/transcribe', '/v1/reminders/run', '/v1/push-tokens', '/v1/farms/lookup', '/v1/farms/join-requests',
+      '/v1/reports/3-fermer', '/v1/horriot/sync', '/v1/admin/me', '/v1/admin/assistant-settings', '/v1/admin/models',
+    ]) {
       assert.ok(paths.includes(p), `нет ${p}`);
     }
   });
@@ -105,7 +112,9 @@ describe('HTTP API', () => {
     assert.equal(body.reply.text, 'Сохранил надой: 120 л за 23 октября');
     assert.equal(db.rows('product_outputs').length > 0, true);
     // сервер ничего не пишет
-    assert.equal(db.calls.filter((c) => c.op !== 'select').length, 0);
+    assert.equal(db.calls.filter((c) => c.op !== 'select' && c.op !== 'rpc').length, 0);
+    assert.equal(body.engine, 'rules');
+    assert.equal(body.model_used, undefined, 'model_used только если отвечала LLM');
   });
 
   it('помощник: чужое/несуществующее хозяйство → 404', async () => {
@@ -165,6 +174,16 @@ describe('HTTP API', () => {
     assert.match(badYear.json().error, /год/);
     const badReceipt = await app.inject({ url: '/v1/receipts/bad', headers: auth });
     assert.equal(badReceipt.statusCode, 400);
+  });
+
+  it('Хорриот: POST /v1/horriot/sync и /api/horriot/sync — токен и farm_id проверяются обработчиком app/api', async () => {
+    for (const url of ['/v1/horriot/sync', '/api/horriot/sync']) {
+      const noAuth = await app.inject({ method: 'POST', url, payload: { farm_id: FARM_ID } });
+      assert.equal(noAuth.statusCode, 401, url);
+      const noFarm = await app.inject({ method: 'POST', url, headers: auth, payload: {} });
+      assert.equal(noFarm.statusCode, 400, url);
+      assert.match(noFarm.json().error, /farm_id/);
+    }
   });
 
   it('несуществующий маршрут → 404 JSON', async () => {

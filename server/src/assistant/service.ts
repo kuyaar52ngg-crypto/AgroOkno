@@ -1,9 +1,9 @@
-// Сервис помощника: выбирает движок (Claude или правила), при сбое Claude — запасной правиловый разбор.
+// Сервис помощника: выбирает движок (OpenRouter или правила), при сбое LLM — запасной правиловый разбор.
 import { randomUUID } from 'node:crypto';
 
 import type { ChatMessage } from '../../../app/src/data/contract';
 import { rulesEngine } from './rules';
-import type { AssistantContext, AssistantEngine, EngineOutput, HistoryItem, NewEvent } from './types';
+import type { AssistantEngine, EngineInput, EngineName, EngineOutput, NewEvent } from './types';
 
 export interface AssistantResponse {
   reply: ChatMessage;
@@ -12,8 +12,8 @@ export interface AssistantResponse {
 }
 
 export interface AssistantService {
-  readonly engine: 'claude' | 'rules';
-  respond(input: { text: string; context: AssistantContext; history: HistoryItem[] }): Promise<AssistantResponse & { engine_used: 'claude' | 'rules' }>;
+  readonly engine: EngineName;
+  respond(input: EngineInput): Promise<AssistantResponse & { engine_used: EngineName; model_used?: string }>;
 }
 
 export interface Logger {
@@ -35,17 +35,17 @@ export function createAssistantService(primary: AssistantEngine, log: Logger, cl
   return {
     engine: primary.name,
     async respond(input) {
-      let used: 'claude' | 'rules' = primary.name;
+      let used: EngineName = primary.name;
       let out: EngineOutput;
       try {
         out = await primary.respond(input);
       } catch (e) {
         if (primary.name === 'rules') throw e;
-        log.warn({ err: e instanceof Error ? e.message : String(e) }, 'Claude недоступен — используем правиловый разбор');
+        log.warn({ err: e instanceof Error ? e.message : String(e) }, 'OpenRouter недоступен — используем правиловый разбор');
         used = 'rules';
         out = await rulesEngine.respond(input);
       }
-      return { ...toResponse(out, clock()), engine_used: used };
+      return { ...toResponse(out, clock()), engine_used: used, ...(used === 'openrouter' && out.model_used ? { model_used: out.model_used } : {}) };
     },
   };
 }

@@ -3,6 +3,7 @@
 import type { FastifyPluginAsync } from 'fastify';
 
 import { GET as household } from '../../../app/api/household/extract';
+import { POST as horriotSync } from '../../../app/api/horriot/sync';
 import { POST as mercurySync } from '../../../app/api/mercury/sync';
 import { GET as receipt } from '../../../app/api/receipts/[no]';
 import { GET as r1fermer } from '../../../app/api/reports/1-fermer';
@@ -32,6 +33,7 @@ export const REPORT_ROUTES: Route[] = [
   { method: 'GET', path: '/receipts/:no', handler: receipt, summary: 'PDF квитанции' },
   { method: 'GET', path: '/household/extract', handler: household, summary: 'PDF выписки из похозяйственной книги' },
   { method: 'POST', path: '/mercury/sync', handler: mercurySync, summary: 'Демо-синхронизация «Меркурия»' },
+  { method: 'POST', path: '/horriot/sync', handler: horriotSync, summary: 'Демо-передача данных в «Хорриот» (учебные записи УЧ-ХР)' },
 ];
 
 export const reportRoutes = (): FastifyPluginAsync => async (app) => {

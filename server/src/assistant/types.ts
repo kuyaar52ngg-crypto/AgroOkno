@@ -16,15 +16,33 @@ export interface HistoryItem {
   text: string;
 }
 
-/** Результат работы движка (Claude или правил): текст, события-предложения и карточки. */
+/** Основная модель OpenRouter и запасные (по порядку): параметр models запроса. */
+export interface ModelChoice {
+  model: string;
+  fallbacks: string[];
+}
+
+/** Результат работы движка (LLM или правил): текст, события-предложения и карточки. */
 export interface EngineOutput {
   text: string;
   proposed_events: NewEvent[];
   needs_clarification: boolean;
   cards?: ChatCard[];
+  /** Модель, которая фактически ответила (только для LLM; при откате на запасную — её id). */
+  model_used?: string;
+}
+
+export type EngineName = 'openrouter' | 'rules';
+
+export interface EngineInput {
+  text: string;
+  context: AssistantContext;
+  history: HistoryItem[];
+  /** Настройка модели из БД (кеш 30 с); правиловый движок её игнорирует. */
+  models?: ModelChoice;
 }
 
 export interface AssistantEngine {
-  readonly name: 'claude' | 'rules';
-  respond(input: { text: string; context: AssistantContext; history: HistoryItem[] }): Promise<EngineOutput>;
+  readonly name: EngineName;
+  respond(input: EngineInput): Promise<EngineOutput>;
 }

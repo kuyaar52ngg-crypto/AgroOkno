@@ -39,7 +39,8 @@ async function main() {
   const { currentFarmData, currentFarm, currentProfile } = await import('../src/data/entities');
   const { net } = await import('../src/data/net');
   const { computeHerd } = await import('../src/data/hooks');
-  const { rows, pendingCount, getDoc } = await import('../src/data/store');
+  const { rows, pendingCount, getDoc, softDelete } = await import('../src/data/store');
+  const { computeHorriot } = await import('../src/data/v3');
   const { buildDashboard } = await import('../src/reports/engine');
 
   await initData();
@@ -102,6 +103,25 @@ async function main() {
   await retrySync();
   assert.equal(pendingCount(), 0);
 
+  // Хорриот (нужна применённая миграция v3): подключение, передача записей журнала, сверка с книгой.
+  assert.throws(() => actions.horriotRefresh(), /не подключён/);
+  actions.horriotConnect();
+  const horriot = actions.horriotRefresh();
+  assert.equal(horriot.status, 'connected_demo');
+  const horriotRecords = rows('horriot_records');
+  assert.equal(horriotRecords.length, 1);
+  assert.equal(horriotRecords[0].number, 'УЧ-ХР-001');
+  assert.equal(horriotRecords[0].kind, 'registration');
+  assert.equal(horriotRecords[0].source_movement_id, open.id);
+  actions.horriotRefresh(); // идемпотентно
+  assert.equal(rows('horriot_records').length, 1);
+  const state = computeHorriot(today)!;
+  assert.equal(state.pending_count, 0);
+  assert.deepEqual(state.reconciliation.map((r) => [r.animal_group, r.book_heads, r.horriot_heads, r.diff]), [['cattle_cows', 10, 10, 0]]);
+  await retrySync();
+  assert.equal(pendingCount(), 0, `после синхронизации Хорриота очередь пуста (осталось ${pendingCount()}; ошибка: ${net.lastError})`);
+  console.log('Хорриот: передано', rows('horriot_records').length, 'запись, сверка без расхождений');
+
   // Обновление и удаление события; проверка на сервере (чтение от имени пользователя).
   actions.updateEvent(milk.id, { type: 'product_output', occurred_on: today, note: 'правка', product: 'milk', quantity: 50, source_group: 'cattle_cows' });
   const data = currentFarmData()!;
@@ -118,6 +138,8 @@ async function main() {
   for (const r of rows('feed_events')) actions.deleteEvent(String(r.id), 'feed');
   for (const r of rows('crop_events')) actions.deleteEvent(String(r.id), 'crop');
   void member;
+  for (const r of rows('horriot_records')) softDelete('horriot_records', String(r.id), new Date().toISOString());
+  softDelete('horriot_connections', String(farm?.id), new Date().toISOString());
   await syncNow({ force: true });
   await sleep(200);
   console.log('Остаток в очереди после очистки:', pendingCount());

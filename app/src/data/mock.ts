@@ -4,7 +4,9 @@
 //   globalThis.__AGRO_MOCK__ = { slow: true }      — экран G1 «Загрузка» (skeleton)
 //   globalThis.__AGRO_MOCK__ = { failSubmit: true } — экран C8 «Не удалось отправить»
 //   globalThis.__AGRO_MOCK__ = { signedIn: true }  — старт сразу в приложении (до первой загрузки)
-// На вебе то же через адрес: ?mock=offline | slow | fail (можно через запятую): offline | slow | fail | in.
+//   globalThis.__AGRO_MOCK__ = { notAdmin: true }  — v3: не администратор (пункта «Модель помощника» нет)
+// failSubmit также ломает «Передать данные» в Хорриот и «Сохранить для всех» в админ-панели (проверка ошибок).
+// На вебе то же через адрес: ?mock=offline | slow | fail (можно через запятую): offline | slow | fail | in | noadmin.
 import { createElement, Fragment, useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { ReactNode } from 'react';
 
@@ -24,6 +26,8 @@ import {
 import type {
   AppNotification,
   AssistantChat,
+  AssistantModelOption,
+  AssistantModelSettings,
   AuthApi,
   AuthResult,
   ChatCard,
@@ -41,6 +45,10 @@ import type {
   FormCode,
   HerdGroup,
   HerdSummary,
+  HorriotConnection,
+  HorriotReconciliationRow,
+  HorriotRecord,
+  HorriotState,
   HorseHerd,
   Household,
   HouseholdExtract,
@@ -90,6 +98,8 @@ interface MockFlags {
   failSubmit?: boolean;
   /** Стартовать уже авторизованным (роль владельца ЛПХ) — для проверки экранов без входа. */
   signedIn?: boolean;
+  /** v3: не администратор — useIsAdmin() возвращает false. */
+  notAdmin?: boolean;
 }
 
 const listeners = new Set<() => void>();
@@ -148,6 +158,7 @@ Object.defineProperty(g, '__AGRO_MOCK__', {
     if (items.includes('slow')) flagsTarget.slow = true;
     if (items.includes('fail')) flagsTarget.failSubmit = true;
     if (items.includes('in')) flagsTarget.signedIn = true;
+    if (items.includes('noadmin')) flagsTarget.notAdmin = true;
   } catch {
     // не веб — флаги задаются через globalThis.__AGRO_MOCK__
   }
@@ -497,6 +508,10 @@ interface MockState {
   reminders: Required<ReminderSettings>;
   chat: ChatState;
   pushToken: string | null;
+  // v3
+  horriot: HorriotConnection;
+  horriotRecords: HorriotRecord[];
+  assistantModel: AssistantModelSettings;
 }
 
 interface ChatState {
@@ -541,6 +556,14 @@ const state: MockState = {
   reminders: { reminders_in_chat: true, remind_7_days: true, remind_1_day: true },
   chat: { messages: [], sending: false, error: null, awaiting: null },
   pushToken: null,
+  horriot: { status: 'not_connected', synced_at: null },
+  horriotRecords: [],
+  assistantModel: {
+    model: 'anthropic/claude-haiku-5.5',
+    fallback_models: ['deepseek/deepseek-chat-v3.1:free', 'meta-llama/llama-3.3-70b-instruct:free'],
+    updated_at: '2026-10-25T10:15:00+09:00',
+    updated_by: 'kuyaar52ngg@gmail.com',
+  },
 };
 
 setTimeout(() => {
@@ -1484,6 +1507,7 @@ function loadDemoWorkspace(): void {
   state.notifications = initialNotifications;
   state.demoData = true;
   state.hasFarm = true;
+  resetHorriot();
 }
 
 function loadBlankWorkspace(): void {
@@ -1496,6 +1520,7 @@ function loadBlankWorkspace(): void {
   state.hasFarm = false;
   state.joinRequest = null;
   state.joinChecks = 0;
+  resetHorriot();
 }
 
 function enterDemo(): void {
@@ -1945,6 +1970,140 @@ function useAssistantChatMock(): AssistantChat {
 
 resetChatState();
 
+// ─── v3: ВетИС «Хорриот» (учебная интеграция) и сверка с книгой ──────────────
+
+const HORRIOT_REASON: Record<LivestockEvent['kind'], string> = {
+  opening_balance: 'Начальный остаток',
+  birth: 'Рождение',
+  purchase: 'Покупка',
+  transfer_in: 'Перевод (приход)',
+  sale: 'Продажа',
+  sale_slaughter: 'Продажа на забой',
+  slaughter: 'Забой',
+  death: 'Падеж',
+  transfer_out: 'Перевод (расход)',
+};
+
+/** При подключении в «Хорриот» уходят движения до этой даты — октябрьские остаются непереданными (расхождения в сверке). */
+const HORRIOT_FIRST_PENDING_ON: IsoDate = '2026-10-01';
+
+function resetHorriot(): void {
+  state.horriot = { status: 'not_connected', synced_at: null };
+  state.horriotRecords = [];
+}
+
+/** Идемпотентно: каждое движение скота получает не более одной записи «Хорриота» (по source_movement_id). */
+function transferToHorriot(events: LivestockEvent[]): void {
+  const known = new Set(state.horriotRecords.map((r) => r.source_movement_id));
+  const fresh = events
+    .filter((e) => !known.has(e.id))
+    .sort((a, b) => a.occurred_on.localeCompare(b.occurred_on) || a.created_at.localeCompare(b.created_at));
+  let seq = state.horriotRecords.length;
+  const added: HorriotRecord[] = fresh.map((e) => {
+    seq += 1;
+    return {
+      id: `hr-${String(seq).padStart(3, '0')}`,
+      number: `УЧ-ХР-${String(seq).padStart(3, '0')}`,
+      kind: INCOMING.has(e.kind) ? 'registration' : 'disposal',
+      animal_group: e.animal_group,
+      group_label: HERD_LABELS[e.animal_group].label,
+      heads: e.heads,
+      reason: HORRIOT_REASON[e.kind],
+      registered_on: e.occurred_on,
+      source_movement_id: e.id,
+    };
+  });
+  state.horriotRecords = [...state.horriotRecords, ...added];
+}
+
+function computeHorriot(): HorriotState {
+  const sent = new Set(state.horriotRecords.map((r) => r.source_movement_id));
+  const pending = livestockEvents().filter((e) => !sent.has(e.id)).length;
+  const today = todayIso();
+  const reconciliation: HorriotReconciliationRow[] = [];
+  for (const group of GROUP_ORDER) {
+    const book = headsOf(group, today);
+    const horriot = state.horriotRecords
+      .filter((r) => r.animal_group === group)
+      .reduce((sum, r) => sum + (r.kind === 'registration' ? r.heads : -r.heads), 0);
+    if (book === 0 && horriot === 0) continue;
+    reconciliation.push({
+      animal_group: group,
+      label: HERD_LABELS[group].label,
+      book_heads: book,
+      horriot_heads: horriot,
+      diff: book - horriot,
+    });
+  }
+  return { connection: state.horriot, records: state.horriotRecords, reconciliation, pending_count: pending };
+}
+
+function useHorriotMock(): Query<HorriotState> {
+  return useQuery('horriot', computeHorriot);
+}
+
+function useHorriotConnectMock(): Mutation<void, HorriotConnection> {
+  return useMutation(() => {
+    update(() => {
+      transferToHorriot(livestockEvents().filter((e) => e.occurred_on < HORRIOT_FIRST_PENDING_ON));
+      state.horriot = { status: 'connected_demo', synced_at: SYNC_AT };
+    });
+    return state.horriot;
+  });
+}
+
+function useHorriotRefreshMock(): Mutation<void, HorriotConnection> {
+  return useMutation(() => {
+    if (flagsTarget.failSubmit) throw new Error('Не удалось передать данные в Хорриот');
+    update(() => {
+      transferToHorriot(livestockEvents());
+      state.horriot = { status: 'connected_demo', synced_at: SUBMIT_AT };
+    });
+    return state.horriot;
+  });
+}
+
+// ─── v3: админ-панель · модель помощника (OpenRouter) ───────────────────────
+
+const ADMIN_EMAIL = 'kuyaar52ngg@gmail.com';
+
+const MODEL_OPTIONS: AssistantModelOption[] = [
+  { id: 'anthropic/claude-haiku-5.5', name: 'Anthropic: Claude Haiku 5.5', free: false, context_length: 200000 },
+  { id: 'anthropic/claude-sonnet-5.5', name: 'Anthropic: Claude Sonnet 5.5', free: false, context_length: 200000 },
+  { id: 'openai/gpt-5-mini', name: 'OpenAI: GPT-5 Mini', free: false, context_length: 400000 },
+  { id: 'google/gemini-2.5-flash', name: 'Google: Gemini 2.5 Flash', free: false, context_length: 1048576 },
+  { id: 'deepseek/deepseek-chat-v3.1:free', name: 'DeepSeek: DeepSeek V3.1 (free)', free: true, context_length: 163840 },
+  { id: 'meta-llama/llama-3.3-70b-instruct:free', name: 'Meta: Llama 3.3 70B Instruct (free)', free: true, context_length: 131072 },
+  { id: 'qwen/qwen3-235b-a22b:free', name: 'Qwen: Qwen3 235B A22B (free)', free: true, context_length: 131072 },
+  { id: 'mistralai/mistral-small-3.2-24b-instruct:free', name: 'Mistral: Mistral Small 3.2 24B (free)', free: true, context_length: 131072 },
+  { id: 'openai/gpt-oss-20b:free', name: 'OpenAI: gpt-oss-20b (free)', free: true, context_length: 131072 },
+];
+
+function useIsAdminMock(): Query<boolean> {
+  return useQuery('is-admin', () => flagsTarget.offline !== true && flagsTarget.notAdmin !== true);
+}
+
+function useAssistantModelSettingsMock(): Query<AssistantModelSettings> {
+  return useQuery('assistant-model', () => state.assistantModel);
+}
+
+function useAssistantModelOptionsMock(): Query<AssistantModelOption[]> {
+  return useQuery('assistant-model-options', () => MODEL_OPTIONS);
+}
+
+function useUpdateAssistantModelSettingsMock(): Mutation<Pick<AssistantModelSettings, 'model' | 'fallback_models'>, AssistantModelSettings> {
+  return useMutation(({ model, fallback_models }: Pick<AssistantModelSettings, 'model' | 'fallback_models'>) => {
+    if (flagsTarget.failSubmit) throw new Error('Не удалось сохранить настройки модели');
+    if (!model.trim()) throw new Error('Выберите основную модель');
+    if (fallback_models.length > 3) throw new Error('Можно выбрать не больше трех запасных моделей');
+    if (new Set([model, ...fallback_models]).size !== fallback_models.length + 1) throw new Error('Модели не должны повторяться');
+    update(() => {
+      state.assistantModel = { model, fallback_models, updated_at: new Date().toISOString(), updated_by: ADMIN_EMAIL };
+    });
+    return state.assistantModel;
+  });
+}
+
 // ─── Экспорт по контракту DataModule ────────────────────────────────────────
 
 export { DataProvider };
@@ -1994,6 +2153,13 @@ export const useUpcomingDeadlines = useUpcomingDeadlinesMock;
 export const useReminderSettings = useReminderSettingsMock;
 export const useUpdateReminderSettings = useUpdateReminderSettingsMock;
 export const registerPushToken: DataModule['registerPushToken'] = async (token) => registerPushTokenMock(token);
+export const useHorriot = useHorriotMock;
+export const useHorriotConnect = useHorriotConnectMock;
+export const useHorriotRefresh = useHorriotRefreshMock;
+export const useIsAdmin = useIsAdminMock;
+export const useAssistantModelSettings = useAssistantModelSettingsMock;
+export const useAssistantModelOptions = useAssistantModelOptionsMock;
+export const useUpdateAssistantModelSettings = useUpdateAssistantModelSettingsMock;
 
 /** Для отладки и скриншотов: сброс флагов состояний. */
 export function setMockFlags(flags: MockFlags): void {

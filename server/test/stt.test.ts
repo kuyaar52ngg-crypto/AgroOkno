@@ -83,8 +83,8 @@ describe('конфигурация провайдера', () => {
     assert.equal(createSttProvider(parseEnv({ ...BASE_ENV, STT_PROVIDER: 'yandex', YANDEX_API_KEY: 'k', YANDEX_FOLDER_ID: 'f' })).name, 'yandex');
   });
   it('пустые значения env игнорируются, некорректный URL — ошибка на русском', () => {
-    const env = parseEnv({ ...BASE_ENV, ANTHROPIC_API_KEY: '', SUPABASE_SERVICE_ROLE_KEY: '  ' });
-    assert.equal(env.ANTHROPIC_API_KEY, undefined);
+    const env = parseEnv({ ...BASE_ENV, OPENROUTER_API_KEY: '', SUPABASE_SERVICE_ROLE_KEY: '  ' });
+    assert.equal(env.OPENROUTER_API_KEY, undefined);
     assert.equal(env.SUPABASE_SERVICE_ROLE_KEY, undefined);
     assert.equal(env.PORT, 3001);
     assert.equal(env.TZ_REGION, 'Asia/Yakutsk');

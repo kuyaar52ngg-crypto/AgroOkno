@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { LogOut } from 'lucide-react-native';
+import { Bot, LogOut } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { initialsOf, Screen } from '@/components/Screen';
@@ -7,7 +7,7 @@ import { ListGroup, ListRow } from '@/components/ui/Cards';
 import { Alert } from '@/components/ui/Feedback';
 import { Text } from '@/components/ui/Text';
 import { Colors, Radius } from '@/constants/theme';
-import { useAuth, useNotifications } from '@/data';
+import { useAuth, useIsAdmin, useNotifications } from '@/data';
 import type { UserRole } from '@/data/contract';
 
 const ROLE_LABEL: Record<UserRole, string> = {
@@ -21,6 +21,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const auth = useAuth();
   const notifications = useNotifications();
+  const isAdmin = useIsAdmin();
   const overdue = (notifications.data ?? []).filter((n) => n.kind === 'overdue' && !n.read).length;
   const unread = (notifications.data ?? []).filter((n) => !n.read).length;
   const farm = auth.farm;
@@ -66,6 +67,18 @@ export default function ProfileScreen() {
         <ListRow title="Настройки" subtitle="Напоминания, доступность, безопасность" onPress={() => router.push('/profile/settings')} />
         <ListRow title="Помощь" subtitle="Ответы и обращение в поддержку" onPress={() => router.push('/profile/help')} last />
       </ListGroup>
+
+      {isAdmin.data === true ? (
+        <ListGroup>
+          <ListRow
+            title="Модель помощника"
+            subtitle="Администратор · выбор модели для всех пользователей"
+            icon={Bot}
+            onPress={() => router.push('/profile/admin')}
+            last
+          />
+        </ListGroup>
+      ) : null}
 
       <ListGroup>
         <ListRow title="Выйти" icon={LogOut} destructive onPress={signOut} last />

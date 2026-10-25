@@ -79,6 +79,13 @@ export interface SubmissionRow {
   snapshot: unknown;
 }
 
+/** Сведения демо-«Хорриота» для PDF-выписки (грузятся только там, где нужны). */
+export interface HorriotInfo {
+  status: 'not_connected' | 'connected_demo';
+  synced_at: string | null;
+  records: { kind: 'registration' | 'disposal'; animal_group: LivestockGroup; heads: number; registered_on: string; source_movement_id: string | null }[];
+}
+
 /** Все данные хозяйства, нужные для расчёта отчётов (без удалённых записей). */
 export interface FarmData {
   farm: Farm;
@@ -89,6 +96,8 @@ export interface FarmData {
   crops: CropRow[];
   members: MemberRow[];
   submissions: SubmissionRow[];
+  /** Только для выписки из книги (loadFarmData с { horriot: true }); undefined — сведений нет или не загружались. */
+  horriot?: HorriotInfo;
 }
 
 export const emptyFarmData = (farm: Farm): FarmData => ({

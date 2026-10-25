@@ -51,3 +51,12 @@ export {
   useUpdateReminderSettings,
   verifySignUpCode,
 } from './v2';
+export {
+  useAssistantModelOptions,
+  useAssistantModelSettings,
+  useHorriot,
+  useHorriotConnect,
+  useHorriotRefresh,
+  useIsAdmin,
+  useUpdateAssistantModelSettings,
+} from './v3';

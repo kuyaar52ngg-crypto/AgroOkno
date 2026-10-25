@@ -2,6 +2,8 @@
 // Запуск из каталога app: npx tsx scripts/api-smoke.ts   (нужен .env.local с URL и publishable key)
 // Отправка отчёта создаёт квитанцию в пустом аккаунте 143500111222, поэтому по умолчанию не выполняется:
 //   SMOKE_SUBMIT=1 npx tsx scripts/api-smoke.ts
+// Проверка «Хорриота» (нужна применённая миграция v3): SMOKE_HORRIOT=1 npx tsx scripts/api-smoke.ts —
+// без подключения демо-режима обработчик отвечает 409; PDF выписки (vypiska.pdf) содержит раздел «Хорриот».
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 
@@ -65,6 +67,12 @@ async function main() {
   }
   const { GET: fermer3 } = await import('../api/reports/3-fermer');
   await save(await fermer3(req(`/api/reports/3-fermer?farm_id=${lph.farmId}&year=2026`, kfh.token)), 'foreign.xlsx'); // чужое хозяйство → 404
+
+  if (process.env.SMOKE_HORRIOT) {
+    const { POST: horriotSync } = await import('../api/horriot/sync');
+    const res = await horriotSync(req('/api/horriot/sync', lph.token, { method: 'POST', body: JSON.stringify({ farm_id: lph.farmId }) }));
+    console.log('horriot/sync', res.status, await res.text());
+  }
 
   if (process.env.SMOKE_SUBMIT) {
     const { POST: submit } = await import('../api/reports/submit');

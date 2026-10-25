@@ -20,8 +20,11 @@ const schema = z.object({
   SUPABASE_PUBLISHABLE_KEY: z.string().min(10, 'SUPABASE_PUBLISHABLE_KEY не задан'),
   SUPABASE_SERVICE_ROLE_KEY: optional,
 
-  ANTHROPIC_API_KEY: optional,
-  ANTHROPIC_MODEL: z.string().default('claude-sonnet-5-5'),
+  // Помощник: OpenRouter (OpenAI-формат). Без ключа — правиловый разбор. Модель обычно берётся из БД (админ-панель),
+  // OPENROUTER_MODEL — запасной вариант, если БД недоступна.
+  OPENROUTER_API_KEY: optional,
+  OPENROUTER_MODEL: z.string().trim().min(1).default('anthropic/claude-haiku-5.5'),
+  OPENROUTER_BASE_URL: z.string().url('OPENROUTER_BASE_URL должен быть URL').default('https://openrouter.ai/api/v1'),
 
   STT_PROVIDER: z.enum(['mock', 'yandex', 'openai']).default('mock'),
   YANDEX_API_KEY: optional,

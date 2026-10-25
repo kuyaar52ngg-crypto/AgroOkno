@@ -13,6 +13,8 @@ export interface TableDef {
   key: string;
   /** Отправлять ли локальные изменения на сервер. */
   push: boolean;
+  /** Таблица новой миграции: если её ещё нет на сервере, синхронизация остальных таблиц не ломается. */
+  optional?: boolean;
 }
 
 /** Порядок важен: родительские таблицы раньше дочерних (внешние ключи). */
@@ -29,6 +31,8 @@ export const TABLES: TableDef[] = [
   { name: 'report_submissions', key: 'id', push: false },
   { name: 'mercury_connections', key: 'farm_id', push: true },
   { name: 'mercury_documents', key: 'id', push: true },
+  { name: 'horriot_connections', key: 'farm_id', push: true, optional: true },
+  { name: 'horriot_records', key: 'id', push: true, optional: true },
   { name: 'notifications', key: 'id', push: true },
   { name: 'user_settings', key: 'user_id', push: true },
   { name: 'support_tickets', key: 'id', push: true },
@@ -117,10 +121,28 @@ async function pullTable(def: TableDef): Promise<void> {
   if (maxSeen && maxSeen !== since) setMeta(metaKey, maxSeen);
 }
 
+/** Таблицы нет в схеме сервера (миграция ещё не применена) — PostgREST PGRST205 или Postgres 42P01. */
+const isMissingTable = (e: unknown): boolean => {
+  const code = (e as { code?: string } | null)?.code;
+  return code === 'PGRST205' || code === '42P01';
+};
+
+async function guardOptional(def: TableDef, run: () => Promise<void>): Promise<void> {
+  try {
+    await run();
+  } catch (e) {
+    if (def.optional && isMissingTable(e)) {
+      console.warn(`[sync] таблицы ${def.name} нет на сервере — пропускаем до применения миграции`);
+      return;
+    }
+    throw e;
+  }
+}
+
 /** Одна полная синхронизация: сначала отправка очереди, затем получение изменений. */
 async function runOnce(): Promise<void> {
-  for (const def of TABLES) if (def.push) await pushTable(def);
-  for (const def of TABLES) await pullTable(def);
+  for (const def of TABLES) if (def.push) await guardOptional(def, () => pushTable(def));
+  for (const def of TABLES) await guardOptional(def, () => pullTable(def));
 }
 
 export function syncNow(options: { force?: boolean } = {}): Promise<void> {

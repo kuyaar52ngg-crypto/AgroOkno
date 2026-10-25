@@ -34,8 +34,9 @@ export const assistantRoutes =
           tags: ['assistant'],
           summary: 'Сообщение помощнику',
           description:
-            'Разбирает фразу (Claude или правила). Возвращает ответ, предложенные события (NewEvent) и признак уточнения. ' +
-            'Сервер ничего не сохраняет — события записывает приложение.',
+            'Разбирает фразу (LLM через OpenRouter или правила). Возвращает ответ, предложенные события (NewEvent), признак уточнения, ' +
+            'использованный движок (engine: openrouter | rules) и модель model_used (только если отвечала LLM). ' +
+            'Модель берётся из настройки администратора (кеш 30 с). Сервер ничего не сохраняет — события записывает приложение.',
           security: [{ bearer: [] }],
           body,
         },
@@ -44,8 +45,15 @@ export const assistantRoutes =
         const { farm_id, text, history } = req.body;
         const today = todayIn(deps.env.TZ_REGION, deps.clock());
         const context = await loadAssistantContext(userDb(deps, req), farm_id, req.user!.id, today);
-        const out = await deps.assistant.respond({ text, context, history: history ?? [] });
-        return { reply: out.reply, proposed_events: out.proposed_events, needs_clarification: out.needs_clarification, engine: out.engine_used };
+        const models = deps.assistant.engine === 'rules' ? undefined : await deps.modelSettings.get(userDb(deps, req));
+        const out = await deps.assistant.respond({ text, context, history: history ?? [], models });
+        return {
+          reply: out.reply,
+          proposed_events: out.proposed_events,
+          needs_clarification: out.needs_clarification,
+          engine: out.engine_used,
+          ...(out.model_used ? { model_used: out.model_used } : {}),
+        };
       },
     );
 

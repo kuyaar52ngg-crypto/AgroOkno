@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { herdRows } from '@/components/herd';
 import type { HerdRow } from '@/components/herd';
+import { HorriotReconcileBlock } from '@/components/HorriotReconcileBlock';
 import { Screen } from '@/components/Screen';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Cards';
@@ -215,6 +216,7 @@ export default function HouseholdScreen() {
           <Alert>
             Нажатие + или − открывает событие учета. Поголовье изменится после его сохранения; события попадут в данные отчетов.
           </Alert>
+          <HorriotReconcileBlock />
           <View style={{ gap: 12 }}>
             <Button title="Выписка из книги" icon={Download} onPress={extract} />
             <Text variant="caption" color={Colors.textSecondaryReadable} align="center">

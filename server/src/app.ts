@@ -9,13 +9,14 @@ import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from 'fast
 import { ApiError } from '../../app/api/_lib/context';
 import type { Deps } from './deps';
 import { HttpError } from './errors';
+import { adminRoutes } from './routes/admin';
 import { assistantRoutes } from './routes/assistant';
 import { farmRoutes } from './routes/farms';
 import { healthRoutes } from './routes/health';
 import { reminderRoutes } from './routes/reminders';
 import { reportRoutes } from './routes/reports';
 
-export const API_VERSION = '2.0.0';
+export const API_VERSION = '3.0.0';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -45,7 +46,8 @@ export async function buildApp(deps: Deps, options: FastifyServerOptions = {}): 
       info: {
         title: 'АгроОкно · API',
         description:
-          'Backend АгроОкно: помощник на Claude (с правиловым fallback), голосовой ввод, напоминания и push, регистрация и участники хозяйства, отчёты (XLSX/PDF), Меркурий (демо). ' +
+          'Backend АгроОкно: помощник на OpenRouter (с правиловым fallback), выбор модели администратором, голосовой ввод, напоминания и push, ' +
+          'регистрация и участники хозяйства, отчёты (XLSX/PDF), Меркурий и Хорриот (демо). ' +
           'Аутентификация — Bearer access_token Supabase; данные читаются от имени пользователя (RLS).',
         version: API_VERSION,
       },
@@ -73,6 +75,7 @@ export async function buildApp(deps: Deps, options: FastifyServerOptions = {}): 
   await app.register(assistantRoutes(deps), { prefix: '/v1/assistant' });
   await app.register(reminderRoutes(deps), { prefix: '/v1' });
   await app.register(farmRoutes(deps), { prefix: '/v1/farms' });
+  await app.register(adminRoutes(deps), { prefix: '/v1/admin' });
   await app.register(reportRoutes());
 
   return app;

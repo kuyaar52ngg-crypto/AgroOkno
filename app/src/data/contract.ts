@@ -372,6 +372,60 @@ export interface MercuryDocument {
   recipient: string;
 }
 
+// ─── v3: ВетИС «Хорриот» (учёт животных) и связь с похозяйственной книгой ─────
+
+export interface HorriotConnection {
+  status: 'not_connected' | 'connected_demo';
+  synced_at: IsoDateTime | null;
+}
+
+/** Учебная запись «Хорриота»: регистрация (рождение, покупка, начальный остаток) или выбытие животных. */
+export interface HorriotRecord {
+  id: Uuid;
+  number: string; // УЧ-ХР-001
+  kind: 'registration' | 'disposal';
+  animal_group: LivestockGroup;
+  group_label: string; // «Коровы»
+  heads: number;
+  reason: string; // «Рождение», «Продажа», «Начальный остаток»
+  registered_on: IsoDate;
+  source_movement_id: Uuid | null;
+}
+
+/** Строка сверки «книга ЛПХ ↔ Хорриот» на сегодня. diff = book_heads − horriot_heads. */
+export interface HorriotReconciliationRow {
+  animal_group: LivestockGroup;
+  label: string;
+  book_heads: number;
+  horriot_heads: number;
+  diff: number;
+}
+
+export interface HorriotState {
+  connection: HorriotConnection;
+  records: HorriotRecord[];
+  reconciliation: HorriotReconciliationRow[];
+  /** Сколько записей журнала поголовья ещё не передано в «Хорриот». */
+  pending_count: number;
+}
+
+// ─── v3: админ-панель · модель помощника (OpenRouter) ───────────────────────
+
+export interface AssistantModelOption {
+  id: string; // «anthropic/claude-haiku-5.5», «…:free»
+  name: string;
+  free: boolean;
+  context_length: number | null;
+}
+
+/** Глобальная настройка для всех пользователей. fallback_models — запасные модели по порядку. */
+export interface AssistantModelSettings {
+  model: string;
+  fallback_models: string[];
+  updated_at: IsoDateTime | null;
+  updated_by: string | null; // email администратора
+}
+
 // ─── Профиль, уведомления, помощь ───────────────────────────────────────────
 
 export interface AppNotification {
@@ -611,4 +665,17 @@ export interface DataModule {
   useUpdateReminderSettings: () => Mutation<ReminderSettings & Partial<Pick<UserSettings, 'push_enabled' | 'sound'>>, void>;
   /** Регистрирует Expo push-токен устройства на сервере. Токен получает UI (expo-notifications). */
   registerPushToken: (token: string, platform: 'ios' | 'android' | 'web') => Promise<void>;
+
+  // ── v3: ВетИС «Хорриот» ──
+  useHorriot: () => Query<HorriotState>;
+  useHorriotConnect: () => Mutation<void, HorriotConnection>;
+  useHorriotRefresh: () => Mutation<void, HorriotConnection>;
+
+  // ── v3: админ-панель (модель помощника для всех) ──
+  /** true, если id текущего пользователя есть в app_admins. Требует сети; офлайн — false. */
+  useIsAdmin: () => Query<boolean>;
+  useAssistantModelSettings: () => Query<AssistantModelSettings>;
+  /** Модели OpenRouter с поддержкой tool calling (платные и :free). */
+  useAssistantModelOptions: () => Query<AssistantModelOption[]>;
+  useUpdateAssistantModelSettings: () => Mutation<Pick<AssistantModelSettings, 'model' | 'fallback_models'>, AssistantModelSettings>;
 }

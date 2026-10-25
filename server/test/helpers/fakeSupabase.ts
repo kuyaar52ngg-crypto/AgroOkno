@@ -1,8 +1,18 @@
-// Минимальная in-memory имитация PostgREST-клиента для тестов (select/insert/delete + фильтры).
+// Минимальная in-memory имитация PostgREST-клиента для тестов (select/insert/upsert/update/delete + фильтры).
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 type Row = Record<string, unknown>;
 type Result = { data: unknown; error: { code?: string; message: string } | null };
+
+/** Исключение RPC-обработчика → { data: null, error } (как raise exception в Postgres). */
+export class RpcError extends Error {
+  constructor(
+    public code: string,
+    message: string,
+  ) {
+    super(message);
+  }
+}
 
 const UNIQUE: Record<string, string[]> = { reminder_log: ['farm_id', 'form_code', 'period', 'kind'], farm_members: ['farm_id', 'user_id'] };
 
@@ -24,8 +34,14 @@ export class FakeDb {
     return {
       from: (table: string) => new Query(db, table),
       rpc: async (fn: string, args: Row = {}) => {
+        db.calls.push({ table: `rpc:${fn}`, op: 'rpc', payload: args });
         const h = db.rpcs[fn];
-        return { data: h ? h(args) : null, error: null };
+        try {
+          return { data: h ? h(args) : null, error: null };
+        } catch (e) {
+          if (e instanceof RpcError) return { data: null, error: { code: e.code, message: e.message } };
+          throw e;
+        }
       },
     } as unknown as SupabaseClient;
   }
@@ -33,7 +49,8 @@ export class FakeDb {
 
 class Query implements PromiseLike<Result> {
   private filters: ((r: Row) => boolean)[] = [];
-  private op: 'select' | 'insert' | 'delete' | 'upsert' = 'select';
+  private op: 'select' | 'insert' | 'delete' | 'upsert' | 'update' = 'select';
+  private patch: Row = {};
   private payload: Row[] = [];
   private lim: number | null = null;
   private rangeFrom = 0;
@@ -56,6 +73,11 @@ class Query implements PromiseLike<Result> {
   upsert(rows: Row | Row[]) {
     this.op = 'upsert';
     this.payload = Array.isArray(rows) ? rows : [rows];
+    return this;
+  }
+  update(patch: Row) {
+    this.op = 'update';
+    this.patch = patch;
     return this;
   }
   delete() {
@@ -116,6 +138,10 @@ class Query implements PromiseLike<Result> {
     const matched = rows.filter((r) => this.filters.every((f) => f(r)));
     if (this.op === 'delete') {
       this.db.tables[this.table] = rows.filter((r) => !matched.includes(r));
+      return { data: matched, error: null };
+    }
+    if (this.op === 'update') {
+      for (const r of matched) Object.assign(r, this.patch);
       return { data: matched, error: null };
     }
     let out = matched.slice(this.rangeFrom, this.rangeTo + 1);

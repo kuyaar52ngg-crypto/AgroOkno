@@ -3,7 +3,7 @@
 // загрузка данных хозяйства в формат мапперов, единый формат ошибок на русском.
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Farm, FormCode } from '../../src/data/contract';
-import type { FarmData } from '../../src/reports/types';
+import type { FarmData, HorriotInfo } from '../../src/reports/types';
 
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -66,7 +66,7 @@ export function parseFarmId(url: URL): string {
   return farmId;
 }
 
-async function selectAll<T>(supabase: SupabaseClient, table: string, columns: string, farmId: string): Promise<T[]> {
+export async function selectAll<T>(supabase: SupabaseClient, table: string, columns: string, farmId: string): Promise<T[]> {
   const rows: T[] = [];
   const page = 1000;
   for (let from = 0; ; from += page) {
@@ -85,8 +85,34 @@ async function selectAll<T>(supabase: SupabaseClient, table: string, columns: st
 
 const num = (v: unknown): number | null => (v === null || v === undefined ? null : Number(v));
 
+/**
+ * Сведения демо-«Хорриота». Ошибки не фатальны (например, миграция v3 ещё не применена): тогда undefined,
+ * чтобы выписка и остальные отчёты продолжали работать.
+ */
+export async function loadHorriot(supabase: SupabaseClient, farmId: string): Promise<HorriotInfo | undefined> {
+  try {
+    const { data: conn, error } = await supabase.from('horriot_connections').select('status, synced_at, deleted_at').eq('farm_id', farmId).maybeSingle();
+    if (error) return undefined;
+    const records = await selectAll<Record<string, unknown>>(supabase, 'horriot_records', 'kind, animal_group, heads, registered_on, source_movement_id', farmId);
+    const connected = conn && !conn.deleted_at && conn.status === 'connected_demo';
+    return {
+      status: connected ? 'connected_demo' : 'not_connected',
+      synced_at: connected ? ((conn.synced_at as string | null) ?? null) : null,
+      records: records.map((r) => ({
+        kind: r.kind as HorriotInfo['records'][number]['kind'],
+        animal_group: r.animal_group as HorriotInfo['records'][number]['animal_group'],
+        heads: Number(r.heads),
+        registered_on: r.registered_on as string,
+        source_movement_id: (r.source_movement_id as string | null) ?? null,
+      })),
+    };
+  } catch {
+    return undefined;
+  }
+}
+
 /** Загружает данные хозяйства от имени пользователя; RLS не отдаст чужое хозяйство. */
-export async function loadFarmData(supabase: SupabaseClient, farmId: string): Promise<FarmData> {
+export async function loadFarmData(supabase: SupabaseClient, farmId: string, options: { horriot?: boolean } = {}): Promise<FarmData> {
   const { data: farm, error } = await supabase.from('farms').select('*').eq('id', farmId).is('deleted_at', null).maybeSingle();
   if (error) throw new ApiError(500, `Не удалось прочитать хозяйство: ${error.message}`);
   if (!farm) throw new ApiError(404, 'Хозяйство не найдено или нет доступа');
@@ -106,6 +132,8 @@ export async function loadFarmData(supabase: SupabaseClient, farmId: string): Pr
     ),
   ]);
 
+  const horriot = options.horriot ? await loadHorriot(supabase, farmId) : undefined;
+
   return {
     farm: farm as unknown as Farm,
     movements: movements.map((m) => ({
@@ -123,6 +151,7 @@ export async function loadFarmData(supabase: SupabaseClient, farmId: string): Pr
     crops: crops.map((c) => ({ ...(c as object), area_ha: Number(c.area_ha), yield_t: num(c.yield_t) }) as FarmData['crops'][number]),
     members: members as unknown as FarmData['members'],
     submissions: submissions as unknown as FarmData['submissions'],
+    ...(horriot ? { horriot } : {}),
   };
 }
 

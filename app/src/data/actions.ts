@@ -6,12 +6,14 @@ import { newId } from '../lib/ids';
 import { balanceOn } from '../reports/period';
 import { buildObligation } from '../reports/engine';
 import { DEADLINES, isMonthly } from '../reports/deadlines';
+import { planHorriotSync, type HorriotSource } from '../reports/horriot';
 import { planMercurySync, type MercurySource } from '../reports/mercury';
 import type {
   Farm,
   FarmUpdate,
   FormCode,
   HouseholdExtract,
+  HorriotConnection,
   HouseholdMember,
   JournalEntry,
   MercuryConnection,
@@ -37,6 +39,7 @@ import {
   toFarm,
   toMember,
   toProfile,
+  toHorriotConnection,
   toMercuryConnection,
   toTicket,
   type EventType,
@@ -246,6 +249,48 @@ export function mercuryRefresh(): MercuryConnection {
   putLocal('mercury_connections', 'farm_id', next);
   requestSync();
   return toMercuryConnection(next);
+}
+
+// ─── Хорриот (демо) ─────────────────────────────────────────────────────────
+
+export function horriotConnect(): HorriotConnection {
+  const farm_id = farmIdOrThrow();
+  const now = nowIso();
+  const old = getDoc('horriot_connections', farm_id)?.data;
+  const row: Row = { created_at: now, ...old, farm_id, status: 'connected_demo', synced_at: now, updated_at: now, deleted_at: null };
+  putLocal('horriot_connections', 'farm_id', row);
+  requestSync();
+  return toHorriotConnection(row);
+}
+
+/** «Передать данные»: создаёт учебные записи УЧ-ХР-NNN из журнала поголовья (то же, что делает api/horriot/sync.ts). */
+export function horriotRefresh(): HorriotConnection {
+  const farm_id = farmIdOrThrow();
+  const conn = getDoc('horriot_connections', farm_id)?.data;
+  if (conn?.status !== 'connected_demo' || conn.deleted_at) throw new Error('Хорриот не подключён. Сначала подключите демо-режим');
+  const sources: HorriotSource[] = rows('livestock_movements').map((r) => ({
+    id: String(r.id),
+    occurred_on: String(r.occurred_on),
+    animal_group: r.animal_group as HorriotSource['animal_group'],
+    kind: r.kind as HorriotSource['kind'],
+    heads: Number(r.heads),
+  }));
+  const records = rows('horriot_records');
+  const planned = planHorriotSync(
+    sources,
+    records.map((r) => String(r.number)),
+    new Set(records.map((r) => String(r.source_movement_id ?? '')).filter(Boolean)),
+  );
+  const now = nowIso();
+  for (const p of planned) {
+    const { group_label: _label, ...fields } = p;
+    void _label;
+    putLocal('horriot_records', 'id', { id: newId(), farm_id, ...fields, created_at: now, updated_at: now, deleted_at: null });
+  }
+  const next: Row = { ...conn, farm_id, synced_at: now, updated_at: now };
+  putLocal('horriot_connections', 'farm_id', next);
+  requestSync();
+  return toHorriotConnection(next);
 }
 
 // ─── Уведомления, настройки, поддержка ──────────────────────────────────────

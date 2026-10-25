@@ -1,9 +1,9 @@
 {
   "name": "agro-okno-server",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
   "type": "module",
-  "description": "АгроОкно — Node.js backend: помощник на Claude, голос, напоминания, регистрация, отчёты",
+  "description": "АгроОкно — Node.js backend: помощник на OpenRouter, голос, напоминания, регистрация, отчёты",
   "engines": {
     "node": ">=22"
   },
@@ -16,7 +16,6 @@
     "smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^1.2.0",
     "@fastify/cors": "^11.3.1",
     "@fastify/multipart": "^10.1.6",
     "@fastify/swagger": "^9.9.2",

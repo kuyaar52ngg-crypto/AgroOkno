@@ -5,6 +5,8 @@ import type {
   CropEvent,
   Farm,
   FeedEvent,
+  HorriotConnection,
+  HorriotRecord,
   HouseholdMember,
   IsoDate,
   JournalEntry,
@@ -20,7 +22,8 @@ import type {
 } from './contract';
 import { rows, getDoc, type Row } from './store';
 import { currentFarmRow, currentUserId } from './session';
-import type { FarmData } from '../reports/types';
+import { groupLabel } from '../reports/horriot';
+import type { FarmData, LivestockGroup } from '../reports/types';
 
 const num = (v: unknown): number => Number(v ?? 0);
 const numOrNull = (v: unknown): number | null => (v === null || v === undefined ? null : Number(v));
@@ -260,10 +263,43 @@ export function toMercuryDocument(r: Row): MercuryDocument {
   };
 }
 
+export function toHorriotConnection(r: Row | undefined): HorriotConnection {
+  return r && !r.deleted_at
+    ? { status: r.status as HorriotConnection['status'], synced_at: str(r.synced_at) }
+    : { status: 'not_connected', synced_at: null };
+}
+
+export function toHorriotRecord(r: Row): HorriotRecord {
+  const group = r.animal_group as LivestockGroup;
+  return {
+    id: String(r.id),
+    number: String(r.number),
+    kind: r.kind as HorriotRecord['kind'],
+    animal_group: group,
+    group_label: groupLabel(group),
+    heads: num(r.heads),
+    reason: String(r.reason),
+    registered_on: String(r.registered_on),
+    source_movement_id: str(r.source_movement_id),
+  };
+}
+
+const NOTIFICATION_KINDS: readonly AppNotification['kind'][] = ['overdue', 'deadline', 'sync', 'submitted'];
+
+/**
+ * Контракт знает четыре вида уведомлений. Рассылки и ответы поддержки приходят с kind = 'admin' (админ-панель):
+ * в UI они показываются как 'sync' (нейтральная информационная иконка), а в локальной БД остаётся исходное значение,
+ * поэтому «прочитано» при отправке на сервер не перезаписывает kind. Неизвестный вид тоже сводится к 'sync',
+ * чтобы экран F3 не падал на иконке. TODO координатору: добавить 'admin' в AppNotification['kind'] и иконку в notifications.tsx.
+ */
+export function notificationKind(raw: unknown): AppNotification['kind'] {
+  return NOTIFICATION_KINDS.includes(raw as AppNotification['kind']) ? (raw as AppNotification['kind']) : 'sync';
+}
+
 export function toNotification(r: Row): AppNotification {
   return {
     id: String(r.id),
-    kind: r.kind as AppNotification['kind'],
+    kind: notificationKind(r.kind),
     title: String(r.title),
     body: String(r.body),
     created_at: String(r.created_at),
