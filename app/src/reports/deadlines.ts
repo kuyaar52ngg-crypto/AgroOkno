@@ -1,4 +1,5 @@
-// Сроки сдачи отчётов. Зеркало справочника public.report_deadlines (см. миграцию reference_and_fixes).
+// Сроки сдачи отчётов. Зеркало справочника public.report_deadlines (см. миграцию reference_and_fixes);
+// правки из админ-панели накладываются поверх через applyDeadlineOverrides.
 // Сроки 3-фермер (4–10 января), 1-фермер (до 15 июня) и 2-фермер (до 21 ноября) взяты из бланков Росстата.
 // Сроки 1-КФХ/1-ИП (приказ Минсельхоза № 165) и республиканских форм Сахастата не прочитаны
 // в сканах приказов (PDF без текстового слоя) — значения демонстрационные, как в макете.
@@ -82,6 +83,43 @@ export const DEADLINES: Record<FormCode, DeadlineRule> = {
     comment: 'Бланка нет — только превью',
   },
 };
+
+/** Поля справочника, которые администратор меняет в веб-панели (RPC admin_update_deadline). */
+const EDITABLE = ['title', 'description', 'comment', 'due_month', 'due_day', 'due_month_offset', 'due_year_offset'] as const;
+const BUILT_IN: Record<string, Pick<DeadlineRule, (typeof EDITABLE)[number]>> = Object.fromEntries(
+  Object.values(DEADLINES).map((r) => [r.form_code, Object.fromEntries(EDITABLE.map((k) => [k, r[k]]))]),
+) as Record<string, Pick<DeadlineRule, (typeof EDITABLE)[number]>>;
+
+const intIn = (v: unknown, min: number, max: number): number | null =>
+  typeof v === 'number' && Number.isInteger(v) && v >= min && v <= max ? v : null;
+
+/**
+ * Применяет строки public.report_deadlines поверх встроенных значений: так правки сроков из админ-панели
+ * доходят до экрана отчётов, напоминаний и квитанций. Неизвестные формы и некорректные значения пропускаются;
+ * пустой список возвращает встроенные сроки. Возвращает число изменённых форм.
+ */
+export function applyDeadlineOverrides(rows: readonly Record<string, unknown>[]): number {
+  const byForm = new Map(rows.map((r) => [String(r.form_code), r]));
+  let changed = 0;
+  for (const rule of Object.values(DEADLINES)) {
+    const base = BUILT_IN[rule.form_code];
+    const row = byForm.get(rule.form_code);
+    const next = {
+      title: typeof row?.title === 'string' && row.title.trim() ? row.title : base.title,
+      description: typeof row?.description === 'string' && row.description.trim() ? row.description : base.description,
+      comment: typeof row?.comment === 'string' ? row.comment : base.comment,
+      due_month: row && row.due_month === null ? null : (intIn(row?.due_month, 1, 12) ?? base.due_month),
+      due_day: intIn(row?.due_day, 1, 31) ?? base.due_day,
+      due_month_offset: intIn(row?.due_month_offset, 0, 12) ?? base.due_month_offset,
+      due_year_offset: intIn(row?.due_year_offset, 0, 3) ?? base.due_year_offset,
+    };
+    if (EDITABLE.some((k) => rule[k] !== next[k])) {
+      Object.assign(rule, next);
+      changed += 1;
+    }
+  }
+  return changed;
+}
 
 /** Какие формы и в каком порядке показываются хозяйству. */
 export function formsForFarm(status: LegalStatus): { federal: FormCode[]; regional: FormCode[] } {

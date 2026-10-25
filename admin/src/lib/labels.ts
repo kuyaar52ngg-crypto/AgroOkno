@@ -124,6 +124,7 @@ export const AUDIT_ACTIONS = [
   'deadline.update',
   'ticket.reply',
   'broadcast.send',
+  'assistant.model_update',
 ] as const;
 
 const ACTION_LABELS: Record<string, string> = {
@@ -134,6 +135,7 @@ const ACTION_LABELS: Record<string, string> = {
   'deadline.update': 'Изменение срока отчёта',
   'ticket.reply': 'Ответ на обращение',
   'broadcast.send': 'Рассылка',
+  'assistant.model_update': 'Смена модели помощника',
 };
 
 export function actionLabel(action: string): string {

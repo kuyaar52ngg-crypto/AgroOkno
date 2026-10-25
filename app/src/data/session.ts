@@ -4,8 +4,8 @@ import { AppState, Platform } from 'react-native';
 
 import { supabase } from '../lib/supabase';
 import { emitChange } from './bus';
-import { lastSyncedAt, net, setOnline } from './net';
-import { onPulled, requestSync, retrySync, setSyncUser, syncNow } from './sync';
+import { isNetworkError, lastSyncedAt, net, setOnline } from './net';
+import { applyCachedDeadlines, onPulled, requestSync, retrySync, setSyncUser, syncNow } from './sync';
 import { getDoc, getMeta, initStore, rows, setMeta, wipeStore, flush, type Row } from './store';
 
 export type AuthStatus = 'loading' | 'signed_out' | 'signed_in';
@@ -17,6 +17,8 @@ let activation: { userId: string; promise: Promise<void> } | null = null;
 let intervalId: ReturnType<typeof setInterval> | null = null;
 const SYNC_INTERVAL_MS = 30_000;
 const FIRST_PULL_TIMEOUT_MS = 15_000;
+/** Сколько ждать восстановления сессии при старте, если есть локальный кеш (дальше — работа офлайн). */
+const OFFLINE_START_MS = 3_000;
 
 const timeout = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
@@ -84,6 +86,7 @@ export function initData(): Promise<void> {
   if (initPromise) return initPromise;
   initPromise = (async () => {
     await initStore();
+    applyCachedDeadlines();
     if (lastSyncedAt()) net.everSynced = true;
 
     supabase.auth.onAuthStateChange((event, s) => {
@@ -91,11 +94,26 @@ export function initData(): Promise<void> {
       else if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && s?.user) void activateUser(s.user.id);
     });
 
-    const { data } = await supabase.auth.getSession();
-    if (data.session?.user) await activateUser(data.session.user.id);
+    // Без связи и с истёкшим токеном (живёт час) Supabase десятки секунд повторяет обновление токена,
+    // а потом не отдаёт сессию. Если кеш хозяйства есть, не держим заставку и не выкидываем на экран входа:
+    // работаем по локальным данным, очередь копится; при появлении сети клиент обновит токен сам,
+    // а если вход отозван — придёт SIGNED_OUT.
+    const cachedUser = getMeta('user_id');
+    const canWorkOffline = () => Boolean(cachedUser) && rows('farms').length > 0;
+    const loaded = supabase.auth.getSession().catch((e: unknown) => ({ data: { session: null }, error: e }));
+    const first = canWorkOffline() ? await Promise.race([loaded, timeout(OFFLINE_START_MS).then(() => null)]) : await loaded;
+    const settle = async (res: Awaited<typeof loaded>) => {
+      if (res.data.session?.user) await activateUser(res.data.session.user.id);
+      else if (res.error && isNetworkError(res.error) && canWorkOffline()) await activateUser(cachedUser!);
+      else if (!activation) {
+        session.status = 'signed_out';
+        emitChange();
+      }
+    };
+    if (first) await settle(first);
     else {
-      session.status = 'signed_out';
-      emitChange();
+      await activateUser(cachedUser!);
+      void loaded.then(settle);
     }
 
     // Возврат приложения на экран и восстановление сети — повод синхронизироваться сразу.

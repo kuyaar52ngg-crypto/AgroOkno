@@ -284,13 +284,12 @@ export function toHorriotRecord(r: Row): HorriotRecord {
   };
 }
 
-const NOTIFICATION_KINDS: readonly AppNotification['kind'][] = ['overdue', 'deadline', 'sync', 'submitted'];
+const NOTIFICATION_KINDS: readonly AppNotification['kind'][] = ['overdue', 'deadline', 'sync', 'submitted', 'admin'];
 
 /**
- * Контракт знает четыре вида уведомлений. Рассылки и ответы поддержки приходят с kind = 'admin' (админ-панель):
- * в UI они показываются как 'sync' (нейтральная информационная иконка), а в локальной БД остаётся исходное значение,
- * поэтому «прочитано» при отправке на сервер не перезаписывает kind. Неизвестный вид тоже сводится к 'sync',
- * чтобы экран F3 не падал на иконке. TODO координатору: добавить 'admin' в AppNotification['kind'] и иконку в notifications.tsx.
+ * Вид уведомления для UI. Рассылки и ответы поддержки приходят с kind = 'admin' (веб-панель администратора).
+ * Неизвестный вид (более новая версия сервера) сводится к 'sync', чтобы экран F3 не падал на иконке;
+ * в локальной БД остаётся исходное значение, поэтому «прочитано» при отправке не перезаписывает kind.
  */
 export function notificationKind(raw: unknown): AppNotification['kind'] {
   return NOTIFICATION_KINDS.includes(raw as AppNotification['kind']) ? (raw as AppNotification['kind']) : 'sync';

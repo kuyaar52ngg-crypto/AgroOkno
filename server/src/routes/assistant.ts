@@ -3,6 +3,7 @@ import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 
 import { loadAssistantContext } from '../assistant/context';
+import { createRateLimiter } from '../assistant/limits';
 import { requireUser, userDb } from '../auth';
 import type { Deps } from '../deps';
 import { HttpError } from '../errors';
@@ -26,6 +27,12 @@ export const assistantRoutes =
   async (instance) => {
     const app = instance.withTypeProvider<ZodTypeProvider>();
     app.addHook('preHandler', requireUser(deps));
+    const limiter = createRateLimiter({
+      perMinute: deps.env.ASSISTANT_RATE_PER_MINUTE,
+      perDay: deps.env.ASSISTANT_RATE_PER_DAY,
+      clock: deps.clock,
+    });
+    app.addHook('preHandler', async (req) => limiter.hit(req.user!.id));
 
     app.post(
       '/messages',

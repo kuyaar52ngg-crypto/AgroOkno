@@ -430,7 +430,8 @@ export interface AssistantModelSettings {
 
 export interface AppNotification {
   id: Uuid;
-  kind: 'overdue' | 'deadline' | 'sync' | 'submitted';
+  /** admin — рассылка или ответ поддержки из веб-панели администратора (v3.1). */
+  kind: 'overdue' | 'deadline' | 'sync' | 'submitted' | 'admin';
   title: string;
   body: string;
   created_at: IsoDateTime;

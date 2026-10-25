@@ -9,6 +9,13 @@ const pass = (Deno.env.get('GMAIL_APP_PASSWORD') ?? '').replace(/\s/g, '');
 /** Почта настроена: коды уходят письмом, demoCode в ответах не возвращается. */
 export const mailEnabled = Boolean(user && pass);
 
+/**
+ * Код входа по восстановлению без почты возвращается в ответе, только если секрет ALLOW_DEMO_CODES=true:
+ * иначе любой, кто знает email или телефон, вошёл бы в чужой аккаунт. Коды регистрации в демо-режиме
+ * по-прежнему приходят в ответе — они подтверждают только новый, ещё не активированный аккаунт.
+ */
+export const demoRecoveryAllowed = Deno.env.get('ALLOW_DEMO_CODES') === 'true';
+
 const transport = mailEnabled
   ? nodemailer.createTransport({ host: 'smtp.gmail.com', port: 465, secure: true, auth: { user, pass } })
   : null;

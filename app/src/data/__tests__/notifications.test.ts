@@ -1,5 +1,5 @@
-// Уведомления kind = 'admin' (рассылки и ответы поддержки): отображаются в F3 как 'sync', а в локальной БД и при отправке
-// на сервер остаются 'admin' (иначе «прочитано» перезаписало бы kind и нарушило бы смысл строки).
+// Уведомления kind = 'admin' (рассылки и ответы поддержки) — свой вид с иконкой в F3; неизвестные виды → 'sync'.
+// В локальной БД и при отправке на сервер kind не меняется (иначе «прочитано» перезаписало бы его).
 // Нативные модули подменяются заглушками (как в horriot.test.ts): SQLite недоступна → локальная БД работает в памяти.
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
@@ -42,18 +42,17 @@ describe('Уведомления kind = admin в приложении', () => {
     await m.store.initStore();
   });
 
-  it('notificationKind: известные виды без изменений, admin и неизвестные → sync', () => {
-    for (const kind of ['overdue', 'deadline', 'sync', 'submitted'] as const) assert.equal(m.entities.notificationKind(kind), kind);
-    assert.equal(m.entities.notificationKind('admin'), 'sync');
+  it('notificationKind: известные виды (и admin) без изменений, неизвестные → sync', () => {
+    for (const kind of ['overdue', 'deadline', 'sync', 'submitted', 'admin'] as const) assert.equal(m.entities.notificationKind(kind), kind);
     assert.equal(m.entities.notificationKind('что-то новое'), 'sync');
     assert.equal(m.entities.notificationKind(undefined), 'sync');
   });
 
-  it('toNotification: рассылка администратора получает вид sync и сохраняет остальные поля', () => {
+  it('toNotification: рассылка администратора получает вид admin и сохраняет остальные поля', () => {
     const n = m.entities.toNotification(note('n-1', 'admin', { title: 'Ответ поддержки · AGRO-2026-0001', body: 'Обновите приложение' }));
     assert.deepEqual(n, {
       id: 'n-1',
-      kind: 'sync',
+      kind: 'admin',
       title: 'Ответ поддержки · AGRO-2026-0001',
       body: 'Обновите приложение',
       created_at: '2026-10-25T01:00:00Z',
@@ -69,7 +68,7 @@ describe('Уведомления kind = admin в приложении', () => {
     assert.equal(admin.kind, 'admin');
     assert.equal(admin.read, true);
     assert.equal(rows.find((r) => r.id === 'n-3')!.read, false);
-    assert.deepEqual(m.entities.toNotification(admin).kind, 'sync');
+    assert.deepEqual(m.entities.toNotification(admin).kind, 'admin');
     assert.ok(m.store.pendingDocs().some((d) => d.tbl === 'notifications' && d.id === 'n-2'), 'изменение ждёт отправки с исходным kind');
   });
 });

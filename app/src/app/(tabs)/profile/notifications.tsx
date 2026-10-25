@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import CircleAlert from 'lucide-react-native/icons/circle-alert';
 import FileCheck from 'lucide-react-native/icons/file-check';
 import FilePenLine from 'lucide-react-native/icons/file-pen-line';
+import Megaphone from 'lucide-react-native/icons/megaphone';
 import RefreshCw from 'lucide-react-native/icons/refresh-cw';
 import type { LucideIcon } from 'lucide-react-native';
 import { useState } from 'react';
@@ -23,6 +24,7 @@ const KIND_ICON: Record<AppNotification['kind'], { icon: LucideIcon; color: stri
   deadline: { icon: FilePenLine, color: Colors.warning },
   sync: { icon: RefreshCw, color: Colors.success },
   submitted: { icon: FileCheck, color: Colors.success },
+  admin: { icon: Megaphone, color: Colors.primary },
 };
 
 type Filter = 'all' | 'new';

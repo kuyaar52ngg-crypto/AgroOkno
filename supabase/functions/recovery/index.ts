@@ -1,11 +1,11 @@
 // Edge Function «recovery»: вход / восстановление доступа по одноразовому коду.
 // Код генерируется и проверяется на сервере. Если заданы секреты Gmail (../_shared/mail.ts), код уходит письмом
-// на email из профиля (даже если человек ввёл телефон). Без секретов — демо-режим: код возвращается в ответе
-// на action=request как demoCode.
+// на email из профиля (даже если человек ввёл телефон). Без секретов вход по коду закрыт; демо-режим (код в ответе
+// на action=request как demoCode) включается только секретом ALLOW_DEMO_CODES=true.
 // После верной проверки выдаётся token_hash magic-link: клиент обменивает его на сессию через verifyOtp.
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { allowResend, checkCode, issueCode } from '../_shared/codes.ts';
-import { mailEnabled, sendCode } from '../_shared/mail.ts';
+import { demoRecoveryAllowed, mailEnabled, sendCode } from '../_shared/mail.ts';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -58,6 +58,9 @@ Deno.serve(async (req) => {
   const profile = await findProfile(contact);
 
   if (body.action === 'request') {
+    if (!mailEnabled && !demoRecoveryAllowed) {
+      return json({ ok: false, error: 'unknown', message: 'Вход по коду временно недоступен: почта не настроена. Войдите по паролю' });
+    }
     if (!profile) {
       return json({ ok: false, error: 'contact_not_found', message: 'Не нашли хозяйство с таким контактом' });
     }
@@ -77,6 +80,9 @@ Deno.serve(async (req) => {
   }
 
   if (body.action === 'verify') {
+    if (!mailEnabled && !demoRecoveryAllowed) {
+      return json({ ok: false, error: 'unknown', message: 'Вход по коду временно недоступен: почта не настроена. Войдите по паролю' });
+    }
     if (!profile) return json({ ok: false, error: 'contact_not_found', message: 'Не нашли хозяйство с таким контактом' });
     const verdict = await checkCode(admin, profile.id, String(body.code ?? ''));
     if (verdict === 'expired') {

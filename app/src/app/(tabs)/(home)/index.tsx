@@ -15,13 +15,14 @@ import Wheat from 'lucide-react-native/icons/wheat';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AssistantBlock } from '@/components/AssistantBlock';
+import { offlineText } from '@/components/OfflineBanner';
 import { Screen } from '@/components/Screen';
 import { Button } from '@/components/ui/Button';
 import { Card, DataTable, QuickAction } from '@/components/ui/Cards';
 import { Alert, Skeleton } from '@/components/ui/Feedback';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { fmtDate, fmtDateTime, fmtHeads, fmtNum, fmtTime, todayIso } from '@/constants/format';
+import { fmtDate, fmtHeads, fmtNum, fmtTime, monthNameLower, todayIso } from '@/constants/format';
 import { Colors, Radius } from '@/constants/theme';
 import { useAuth, useDashboard, useHerd, useReports, useSyncStatus } from '@/data';
 import type { HerdSummary, ReportObligation } from '@/data/contract';
@@ -97,7 +98,8 @@ function OfflineHome() {
   const sync = useSyncStatus();
   const dashboard = useDashboard();
   const herd = useHerd();
-  const reports = useReports(2026);
+  const today = todayIso();
+  const reports = useReports(Number(today.slice(0, 4)));
   const total = herd.data?.total ?? 0;
   const cows = sum(herd.data, ['cattle_cows']);
   const calves = sum(herd.data, ['cattle_calves']);
@@ -105,7 +107,6 @@ function OfflineHome() {
   const sheep = sum(herd.data, ['sheep']);
   const federal = (reports.data ?? []).filter((r) => r.scope === 'federal');
   const submitted = federal.filter((r) => r.status === 'submitted').length;
-  const cachedAt = fmtDateTime(sync.last_synced_at);
 
   return (
     <Screen
@@ -115,7 +116,7 @@ function OfflineHome() {
       loading={dashboard.loading || herd.loading || reports.loading}
     >
       <Alert tone="warning" title="Вы офлайн">
-        {`Данные из кеша на ${cachedAt}. Отправка отчетов недоступна. Новый локальный черновик можно сохранить.`}
+        {offlineText(sync.last_synced_at, sync.pending_changes)}
       </Alert>
       <Button title="Повторить" icon={RefreshCw} onPress={() => sync.retry()} />
       <DataTable
@@ -124,7 +125,7 @@ function OfflineHome() {
           { label: 'Поголовье', value: fmtHeads(total) },
           { label: 'Коровы / телята', value: `${cows} / ${calves}` },
           { label: 'Лошади / овцы', value: `${horses} / ${sheep}` },
-          { label: 'Надой за октябрь', value: `${fmtNum(dashboard.data?.milk_month_l ?? 0)} л` },
+          { label: `Надой за ${monthNameLower(Number(today.slice(5, 7)))}`, value: `${fmtNum(dashboard.data?.milk_month_l ?? 0)} л` },
         ]}
       />
       <View style={styles.statusCard}>
@@ -159,7 +160,7 @@ function OfflineHome() {
       </View>
       <Button title="Сохранить локальный черновик" variant="secondary" icon={FilePenLine} onPress={() => router.navigate('/add')} />
       <Text variant="caption" color={Colors.textSecondaryReadable} align="center">
-        Демонстрационное офлайн-состояние. После восстановления связи проверьте данные перед отправкой.
+        Записи без связи хранятся на телефоне и не пропадут после перезапуска. Когда связь появится, они отправятся сами — проверьте отчеты перед отправкой.
       </Text>
     </Screen>
   );

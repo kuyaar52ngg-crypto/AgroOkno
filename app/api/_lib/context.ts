@@ -3,6 +3,7 @@
 // загрузка данных хозяйства в формат мапперов, единый формат ошибок на русском.
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Farm, FormCode } from '../../src/data/contract';
+import { applyDeadlineOverrides } from '../../src/reports/deadlines';
 import type { FarmData, HorriotInfo } from '../../src/reports/types';
 
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -112,6 +113,25 @@ export async function loadHorriot(supabase: SupabaseClient, farmId: string): Pro
 }
 
 /** Загружает данные хозяйства от имени пользователя; RLS не отдаст чужое хозяйство. */
+const DEADLINES_TTL_MS = 60_000;
+let deadlinesLoadedAt = 0;
+
+/**
+ * Сроки из справочника report_deadlines (их меняет админ-панель) поверх встроенных — не чаще раза в минуту на процесс.
+ * Ошибка чтения не мешает отчёту: остаются последние известные сроки.
+ */
+export async function refreshDeadlines(supabase: SupabaseClient): Promise<void> {
+  if (Date.now() - deadlinesLoadedAt < DEADLINES_TTL_MS) return;
+  try {
+    const { data, error } = await supabase.from('report_deadlines').select('*');
+    if (error || !Array.isArray(data)) return;
+    applyDeadlineOverrides(data as Record<string, unknown>[]);
+    deadlinesLoadedAt = Date.now();
+  } catch {
+    // справочник недоступен — работаем на прежних сроках
+  }
+}
+
 export async function loadFarmData(supabase: SupabaseClient, farmId: string, options: { horriot?: boolean } = {}): Promise<FarmData> {
   const { data: farm, error } = await supabase.from('farms').select('*').eq('id', farmId).is('deleted_at', null).maybeSingle();
   if (error) throw new ApiError(500, `Не удалось прочитать хозяйство: ${error.message}`);
@@ -133,6 +153,7 @@ export async function loadFarmData(supabase: SupabaseClient, farmId: string, opt
   ]);
 
   const horriot = options.horriot ? await loadHorriot(supabase, farmId) : undefined;
+  await refreshDeadlines(supabase);
 
   return {
     farm: farm as unknown as Farm,

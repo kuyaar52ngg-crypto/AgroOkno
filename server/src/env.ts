@@ -32,6 +32,10 @@ const schema = z.object({
   OPENAI_API_KEY: optional,
   OPENAI_STT_MODEL: z.string().default('whisper-1'),
 
+  // Лимит запросов к помощнику (сообщения + голос) на пользователя; 0 — без ограничения.
+  ASSISTANT_RATE_PER_MINUTE: z.coerce.number().int().min(0).default(10),
+  ASSISTANT_RATE_PER_DAY: z.coerce.number().int().min(0).default(200),
+
   CRON_SECRET: optional,
   CRON_ENABLED: bool,
   TZ_REGION: z.string().default('Asia/Yakutsk'),

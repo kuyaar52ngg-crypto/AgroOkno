@@ -5,19 +5,28 @@ import RefreshCw from 'lucide-react-native/icons/refresh-cw';
 import { Alert } from '@/components/ui/Feedback';
 import { Icon } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
-import { fmtDateTime } from '@/constants/format';
+import { fmtDateTime, plural } from '@/constants/format';
 import { Colors } from '@/constants/theme';
 import { useSyncStatus } from '@/data';
+
+/** Текст офлайн-состояния: с какого момента кеш и сколько записей ждут отправки (G2). */
+export function offlineText(lastSyncedAt: string | null, pending: number): string {
+  const cachedAt = fmtDateTime(lastSyncedAt);
+  const queue =
+    pending > 0
+      ? ` ${pending} ${plural(pending, ['запись сохранена', 'записи сохранены', 'записей сохранено'])} на телефоне и ${plural(pending, ['отправится', 'отправятся', 'отправятся'])} сама, когда появится связь.`
+      : ' Новые записи сохранятся на телефоне и отправятся, когда появится связь.';
+  return `Данные из кеша${cachedAt ? ` на ${cachedAt}` : ''}.${queue} Отправка отчетов недоступна.`;
+}
 
 /** Жёлтая плашка «Вы офлайн. Данные из кеша на …» (G2) с кнопкой «Повторить». */
 export function OfflineBanner() {
   const sync = useSyncStatus();
   const [busy, setBusy] = useState(false);
-  const cachedAt = fmtDateTime(sync.last_synced_at);
   return (
     <View style={{ gap: 8 }}>
       <Alert tone="warning" title="Вы офлайн">
-        {`Данные из кеша${cachedAt ? ` на ${cachedAt}` : ''}. Отправка отчетов недоступна. Новый локальный черновик можно сохранить.`}
+        {offlineText(sync.last_synced_at, sync.pending_changes)}
       </Alert>
       <Pressable
         accessibilityRole="button"

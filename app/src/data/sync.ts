@@ -3,6 +3,7 @@
 //  • Чтение: pull по updated_at >= last_pulled_at для каждой таблицы; мягкие удаления применяются локально.
 //  • Конфликты: несинхронизированная локальная правка не затирается pull-ом; после отправки побеждает серверная версия.
 import { supabase } from '../lib/supabase';
+import { applyDeadlineOverrides } from '../reports/deadlines';
 import { emitChange } from './bus';
 import { isNetworkError, lastSyncedAt, markSynced, net, setLastError, setOnline, setSyncing } from './net';
 import { applyServerRows, clearPending, getDoc, getMeta, pendingDocs, setMeta, type Doc, type Row } from './store';
@@ -139,6 +140,29 @@ async function guardOptional(def: TableDef, run: () => Promise<void>): Promise<v
   }
 }
 
+const DEADLINES_META = 'report_deadlines';
+
+/** Сроки из кеша прошлой синхронизации — чтобы правки админ-панели действовали и офлайн. */
+export function applyCachedDeadlines(): void {
+  try {
+    const cached = getMeta(DEADLINES_META);
+    if (cached) applyDeadlineOverrides(JSON.parse(cached) as Row[]);
+  } catch {
+    // повреждённый кеш — остаются встроенные сроки
+  }
+}
+
+/** Справочник сроков (9 строк, без updated_at) читается целиком; правки админ-панели накладываются на встроенные сроки. */
+async function pullDeadlines(): Promise<void> {
+  const { data, error } = await supabase.from('report_deadlines').select('*');
+  if (error) throw error;
+  const rows = (data ?? []) as Row[];
+  const json = JSON.stringify(rows);
+  if (json === getMeta(DEADLINES_META)) return;
+  setMeta(DEADLINES_META, json);
+  if (applyDeadlineOverrides(rows) > 0) emitChange();
+}
+
 /**
  * Одна полная синхронизация: сначала отправка очереди (последовательно — из-за внешних ключей),
  * затем получение изменений всех таблиц параллельно: курсоры у таблиц независимые, а 18 запросов
@@ -146,7 +170,7 @@ async function guardOptional(def: TableDef, run: () => Promise<void>): Promise<v
  */
 async function runOnce(): Promise<void> {
   for (const def of TABLES) if (def.push) await guardOptional(def, () => pushTable(def));
-  await Promise.all(TABLES.map((def) => guardOptional(def, () => pullTable(def))));
+  await Promise.all([...TABLES.map((def) => guardOptional(def, () => pullTable(def))), pullDeadlines()]);
 }
 
 export function syncNow(options: { force?: boolean } = {}): Promise<void> {
