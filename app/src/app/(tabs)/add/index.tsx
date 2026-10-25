@@ -1,5 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Check, Milk, Wheat } from 'lucide-react-native';
+import Check from 'lucide-react-native/icons/check';
+import Milk from 'lucide-react-native/icons/milk';
+import Wheat from 'lucide-react-native/icons/wheat';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 

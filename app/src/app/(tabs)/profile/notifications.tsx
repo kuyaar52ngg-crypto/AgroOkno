@@ -1,5 +1,8 @@
 import { useRouter } from 'expo-router';
-import { CircleAlert, FileCheck, FilePenLine, RefreshCw } from 'lucide-react-native';
+import CircleAlert from 'lucide-react-native/icons/circle-alert';
+import FileCheck from 'lucide-react-native/icons/file-check';
+import FilePenLine from 'lucide-react-native/icons/file-pen-line';
+import RefreshCw from 'lucide-react-native/icons/refresh-cw';
 import type { LucideIcon } from 'lucide-react-native';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';

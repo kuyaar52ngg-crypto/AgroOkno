@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import { Calendar, RefreshCw } from 'lucide-react-native';
+import Calendar from 'lucide-react-native/icons/calendar';
+import RefreshCw from 'lucide-react-native/icons/refresh-cw';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 

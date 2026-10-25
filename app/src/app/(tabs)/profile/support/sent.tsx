@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { CircleCheck } from 'lucide-react-native';
+import CircleCheck from 'lucide-react-native/icons/circle-check';
 import { StyleSheet, View } from 'react-native';
 
 import { Screen } from '@/components/Screen';

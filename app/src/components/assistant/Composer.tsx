@@ -1,4 +1,5 @@
-import { ArrowUp, Mic } from 'lucide-react-native';
+import ArrowUp from 'lucide-react-native/icons/arrow-up';
+import Mic from 'lucide-react-native/icons/mic';
 import { useState } from 'react';
 import type { ComponentRef, Ref } from 'react';
 import { Pressable, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';

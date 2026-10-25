@@ -139,10 +139,14 @@ async function guardOptional(def: TableDef, run: () => Promise<void>): Promise<v
   }
 }
 
-/** Одна полная синхронизация: сначала отправка очереди, затем получение изменений. */
+/**
+ * Одна полная синхронизация: сначала отправка очереди (последовательно — из-за внешних ключей),
+ * затем получение изменений всех таблиц параллельно: курсоры у таблиц независимые, а 18 запросов
+ * по очереди на первом входе занимали несколько секунд.
+ */
 async function runOnce(): Promise<void> {
   for (const def of TABLES) if (def.push) await guardOptional(def, () => pushTable(def));
-  for (const def of TABLES) await guardOptional(def, () => pullTable(def));
+  await Promise.all(TABLES.map((def) => guardOptional(def, () => pullTable(def))));
 }
 
 export function syncNow(options: { force?: boolean } = {}): Promise<void> {

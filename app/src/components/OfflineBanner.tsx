@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { RefreshCw } from 'lucide-react-native';
+import RefreshCw from 'lucide-react-native/icons/refresh-cw';
 
 import { Alert } from '@/components/ui/Feedback';
 import { Icon } from '@/components/ui/Icon';

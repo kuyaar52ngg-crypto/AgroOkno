@@ -1,5 +1,9 @@
 import { useRouter } from 'expo-router';
-import { ChevronDown, ChevronRight, ChevronUp, MessageCircle, Search } from 'lucide-react-native';
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
+import ChevronRight from 'lucide-react-native/icons/chevron-right';
+import ChevronUp from 'lucide-react-native/icons/chevron-up';
+import MessageCircle from 'lucide-react-native/icons/message-circle';
+import Search from 'lucide-react-native/icons/search';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 

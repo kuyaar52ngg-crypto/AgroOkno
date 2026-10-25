@@ -1,5 +1,11 @@
 import { useRouter } from 'expo-router';
-import { ChevronRight, CircleCheck, ExternalLink, FileInput, FileOutput, PawPrint, Upload } from 'lucide-react-native';
+import ChevronRight from 'lucide-react-native/icons/chevron-right';
+import CircleCheck from 'lucide-react-native/icons/circle-check';
+import ExternalLink from 'lucide-react-native/icons/external-link';
+import FileInput from 'lucide-react-native/icons/file-input';
+import FileOutput from 'lucide-react-native/icons/file-output';
+import PawPrint from 'lucide-react-native/icons/paw-print';
+import Upload from 'lucide-react-native/icons/upload';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 

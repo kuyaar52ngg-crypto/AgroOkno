@@ -1,5 +1,9 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronRight, Download, MapPin, UserPlus, Users } from 'lucide-react-native';
+import ChevronRight from 'lucide-react-native/icons/chevron-right';
+import Download from 'lucide-react-native/icons/download';
+import MapPin from 'lucide-react-native/icons/map-pin';
+import UserPlus from 'lucide-react-native/icons/user-plus';
+import Users from 'lucide-react-native/icons/users';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { herdRows } from '@/components/herd';

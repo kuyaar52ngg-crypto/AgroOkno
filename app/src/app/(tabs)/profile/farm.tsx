@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import { Check, Lock } from 'lucide-react-native';
+import Check from 'lucide-react-native/icons/check';
+import Lock from 'lucide-react-native/icons/lock';
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 

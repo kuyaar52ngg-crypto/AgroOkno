@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Trash2 } from 'lucide-react-native';
+import Trash2 from 'lucide-react-native/icons/trash';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 

@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import { PawPrint, TriangleAlert } from 'lucide-react-native';
+import PawPrint from 'lucide-react-native/icons/paw-print';
+import TriangleAlert from 'lucide-react-native/icons/triangle-alert';
 import { StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';

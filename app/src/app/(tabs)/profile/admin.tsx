@@ -1,5 +1,10 @@
 import { useRouter } from 'expo-router';
-import { ArrowDown, ArrowUp, Check, Plus, Search, X } from 'lucide-react-native';
+import ArrowDown from 'lucide-react-native/icons/arrow-down';
+import ArrowUp from 'lucide-react-native/icons/arrow-up';
+import Check from 'lucide-react-native/icons/check';
+import Plus from 'lucide-react-native/icons/plus';
+import Search from 'lucide-react-native/icons/search';
+import X from 'lucide-react-native/icons/x';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';

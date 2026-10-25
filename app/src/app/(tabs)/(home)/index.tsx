@@ -1,5 +1,17 @@
 import { useRouter } from 'expo-router';
-import { BookOpen, Carrot, ChevronRight, CircleAlert, CircleCheck, CirclePlus, FilePenLine, Milk, PawPrint, RefreshCw, ShieldCheck, Sprout, Wheat } from 'lucide-react-native';
+import BookOpen from 'lucide-react-native/icons/book-open';
+import Carrot from 'lucide-react-native/icons/carrot';
+import ChevronRight from 'lucide-react-native/icons/chevron-right';
+import CircleAlert from 'lucide-react-native/icons/circle-alert';
+import CircleCheck from 'lucide-react-native/icons/circle-check';
+import CirclePlus from 'lucide-react-native/icons/circle-plus';
+import FilePenLine from 'lucide-react-native/icons/file-pen-line';
+import Milk from 'lucide-react-native/icons/milk';
+import PawPrint from 'lucide-react-native/icons/paw-print';
+import RefreshCw from 'lucide-react-native/icons/refresh-cw';
+import ShieldCheck from 'lucide-react-native/icons/shield-check';
+import Sprout from 'lucide-react-native/icons/sprout';
+import Wheat from 'lucide-react-native/icons/wheat';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AssistantBlock } from '@/components/AssistantBlock';

@@ -3,7 +3,8 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
-import { ArrowRight, ChevronRight } from 'lucide-react-native';
+import ArrowRight from 'lucide-react-native/icons/arrow-right';
+import ChevronRight from 'lucide-react-native/icons/chevron-right';
 
 import { Colors, Radius, Shadow } from '@/constants/theme';
 

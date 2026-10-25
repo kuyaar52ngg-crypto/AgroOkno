@@ -3,7 +3,12 @@ import { useEffect, useState } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
 import type { DimensionValue, StyleProp, ViewStyle } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
-import { CircleAlert, CircleCheck, FilePenLine, Info, TriangleAlert, Unlink } from 'lucide-react-native';
+import CircleAlert from 'lucide-react-native/icons/circle-alert';
+import CircleCheck from 'lucide-react-native/icons/circle-check';
+import FilePenLine from 'lucide-react-native/icons/file-pen-line';
+import Info from 'lucide-react-native/icons/info';
+import TriangleAlert from 'lucide-react-native/icons/triangle-alert';
+import Unlink from 'lucide-react-native/icons/unlink';
 
 import { Colors, Radius } from '@/constants/theme';
 

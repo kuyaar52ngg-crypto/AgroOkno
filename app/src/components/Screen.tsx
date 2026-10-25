@@ -4,7 +4,7 @@ import { KeyboardAvoidingView, Platform, Pressable, RefreshControl, ScrollView, 
 import type { StyleProp, ViewStyle } from 'react-native';
 import { useRouter } from 'expo-router';
 import type { Href } from 'expo-router';
-import { ArrowLeft } from 'lucide-react-native';
+import ArrowLeft from 'lucide-react-native/icons/arrow-left';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppHeader } from '@/components/ui/AppHeader';

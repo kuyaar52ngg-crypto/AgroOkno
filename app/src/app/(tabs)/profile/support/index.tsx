@@ -1,6 +1,8 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
-import { Paperclip, Send, X } from 'lucide-react-native';
+import Paperclip from 'lucide-react-native/icons/paperclip';
+import Send from 'lucide-react-native/icons/send';
+import X from 'lucide-react-native/icons/x';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 

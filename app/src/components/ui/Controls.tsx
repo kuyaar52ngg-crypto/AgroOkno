@@ -1,6 +1,8 @@
 // Мелкие контролы дизайн-системы: Checkbox, Radio (карточка-вариант), Toggle, Counter, Chips, Segmented Tabs.
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Check, Minus, Plus } from 'lucide-react-native';
+import Check from 'lucide-react-native/icons/check';
+import Minus from 'lucide-react-native/icons/minus';
+import Plus from 'lucide-react-native/icons/plus';
 
 import { Colors, FontFamily, Radius } from '@/constants/theme';
 

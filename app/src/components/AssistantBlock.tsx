@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Mic } from 'lucide-react-native';
+import Mic from 'lucide-react-native/icons/mic';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/ui/Button';

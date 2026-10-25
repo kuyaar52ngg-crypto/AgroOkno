@@ -1,5 +1,7 @@
 import { useRouter } from 'expo-router';
-import { FileText, Minus, Plus } from 'lucide-react-native';
+import FileText from 'lucide-react-native/icons/file-text';
+import Minus from 'lucide-react-native/icons/minus';
+import Plus from 'lucide-react-native/icons/plus';
 import { StyleSheet, View } from 'react-native';
 
 import { Screen } from '@/components/Screen';

@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Pencil, Trash2 } from 'lucide-react-native';
+import Pencil from 'lucide-react-native/icons/pencil';
+import Trash2 from 'lucide-react-native/icons/trash';
 import { StyleSheet, View } from 'react-native';
 
 import { toNewEvent } from '@/components/event-form';

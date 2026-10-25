@@ -7,4 +7,21 @@ module.exports = defineConfig([
   {
     ignores: ['dist/*'],
   },
+  {
+    rules: {
+      // Корневой импорт lucide-react-native тянет в бандл все ~1900 иконок (+2 МБ) — иконки берём поштучно.
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'lucide-react-native',
+              allowTypeImports: true,
+              message: "Импортируйте иконку поштучно: import House from 'lucide-react-native/icons/house'.",
+            },
+          ],
+        },
+      ],
+    },
+  },
 ]);

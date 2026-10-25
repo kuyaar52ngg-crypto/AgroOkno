@@ -1,6 +1,9 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
-import { CirclePlus, FileText, House, User } from 'lucide-react-native';
+import CirclePlus from 'lucide-react-native/icons/circle-plus';
+import FileText from 'lucide-react-native/icons/file-text';
+import House from 'lucide-react-native/icons/house';
+import User from 'lucide-react-native/icons/user';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors } from '@/constants/theme';

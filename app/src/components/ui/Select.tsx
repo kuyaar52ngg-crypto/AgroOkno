@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
-import { Check, ChevronDown } from 'lucide-react-native';
+import Check from 'lucide-react-native/icons/check';
+import ChevronDown from 'lucide-react-native/icons/chevron-down';
 
 import { Colors } from '@/constants/theme';
 

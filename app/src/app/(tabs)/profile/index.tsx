@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
-import { Bot, LogOut } from 'lucide-react-native';
+import Bot from 'lucide-react-native/icons/bot';
+import LogOut from 'lucide-react-native/icons/log-out';
 import { StyleSheet, View } from 'react-native';
 
 import { initialsOf, Screen } from '@/components/Screen';

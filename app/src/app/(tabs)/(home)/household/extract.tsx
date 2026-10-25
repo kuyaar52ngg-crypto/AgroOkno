@@ -1,4 +1,5 @@
-import { Download, Share2 } from 'lucide-react-native';
+import Download from 'lucide-react-native/icons/download';
+import Share2 from 'lucide-react-native/icons/share-2';
 import { useState } from 'react';
 import { Platform, Share, StyleSheet, View } from 'react-native';
 

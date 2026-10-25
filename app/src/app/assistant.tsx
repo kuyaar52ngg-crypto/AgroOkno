@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { House, Settings2 } from 'lucide-react-native';
+import House from 'lucide-react-native/icons/house';
+import Settings2 from 'lucide-react-native/icons/settings-2';
 import { useEffect, useRef, useState } from 'react';
 import type { ComponentRef } from 'react';
 import { KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';

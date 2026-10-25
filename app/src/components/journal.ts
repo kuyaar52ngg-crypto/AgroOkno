@@ -1,5 +1,10 @@
 import type { LucideIcon } from 'lucide-react-native';
-import { CircleMinus, CirclePlus, Milk, ShoppingCart, Sprout, Wheat } from 'lucide-react-native';
+import CircleMinus from 'lucide-react-native/icons/circle-minus';
+import CirclePlus from 'lucide-react-native/icons/circle-plus';
+import Milk from 'lucide-react-native/icons/milk';
+import ShoppingCart from 'lucide-react-native/icons/shopping-cart';
+import Sprout from 'lucide-react-native/icons/sprout';
+import Wheat from 'lucide-react-native/icons/wheat';
 
 import { fmtDate, fmtHeads, fmtNum, kgToLiters } from '@/constants/format';
 import {

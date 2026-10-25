@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { RefreshCw, WifiOff } from 'lucide-react-native';
+import RefreshCw from 'lucide-react-native/icons/refresh-cw';
+import WifiOff from 'lucide-react-native/icons/wifi-off';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 

@@ -1,4 +1,4 @@
-import { ArrowRight } from 'lucide-react-native';
+import ArrowRight from 'lucide-react-native/icons/arrow-right';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Icon } from '@/components/ui/Icon';

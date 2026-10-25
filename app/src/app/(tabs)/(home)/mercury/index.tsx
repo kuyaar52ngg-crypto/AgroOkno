@@ -1,5 +1,10 @@
 import { useRouter } from 'expo-router';
-import { ChevronRight, ExternalLink, FileCheck, RefreshCw, Search, ShieldCheck } from 'lucide-react-native';
+import ChevronRight from 'lucide-react-native/icons/chevron-right';
+import ExternalLink from 'lucide-react-native/icons/external-link';
+import FileCheck from 'lucide-react-native/icons/file-check';
+import RefreshCw from 'lucide-react-native/icons/refresh-cw';
+import Search from 'lucide-react-native/icons/search';
+import ShieldCheck from 'lucide-react-native/icons/shield-check';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 

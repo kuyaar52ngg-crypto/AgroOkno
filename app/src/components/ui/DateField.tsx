@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react-native';
+import CalendarIcon from 'lucide-react-native/icons/calendar';
+import ChevronLeft from 'lucide-react-native/icons/chevron-left';
+import ChevronRight from 'lucide-react-native/icons/chevron-right';
+import ChevronsLeft from 'lucide-react-native/icons/chevrons-left';
+import ChevronsRight from 'lucide-react-native/icons/chevrons-right';
 
 import { fmtDate, fmtDateLong, monthName, todayIso } from '@/constants/format';
 import { Colors } from '@/constants/theme';

@@ -3,7 +3,9 @@ import type { ComponentRef } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import type { StyleProp, TextInputProps, TextStyle, ViewStyle } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
-import { CircleAlert, Eye, EyeOff } from 'lucide-react-native';
+import CircleAlert from 'lucide-react-native/icons/circle-alert';
+import Eye from 'lucide-react-native/icons/eye';
+import EyeOff from 'lucide-react-native/icons/eye-off';
 
 import { Colors, FontFamily } from '@/constants/theme';
 

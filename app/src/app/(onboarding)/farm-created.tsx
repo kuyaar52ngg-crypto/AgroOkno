@@ -1,4 +1,4 @@
-import { CirclePlus } from 'lucide-react-native';
+import CirclePlus from 'lucide-react-native/icons/circle-plus';
 import { StyleSheet, View } from 'react-native';
 
 import { Screen } from '@/components/Screen';

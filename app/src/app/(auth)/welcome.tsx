@@ -1,5 +1,7 @@
 import { useRouter } from 'expo-router';
-import { BookOpen, CirclePlus, FileText } from 'lucide-react-native';
+import BookOpen from 'lucide-react-native/icons/book-open';
+import CirclePlus from 'lucide-react-native/icons/circle-plus';
+import FileText from 'lucide-react-native/icons/file-text';
 import type { LucideIcon } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 

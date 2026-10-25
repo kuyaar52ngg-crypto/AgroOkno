@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Send } from 'lucide-react-native';
+import Send from 'lucide-react-native/icons/send';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 

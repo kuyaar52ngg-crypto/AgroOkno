@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, View } from 'react-native';
-import { ArrowLeft } from 'lucide-react-native';
+import ArrowLeft from 'lucide-react-native/icons/arrow-left';
 
 import { Colors, Spacing } from '@/constants/theme';
 
