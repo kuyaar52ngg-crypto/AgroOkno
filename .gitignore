@@ -32,3 +32,4 @@ docs/*-qr.png
 .vscode/
 app/AGENTS.md
 app/scripts/dump-*.js
+!app/.env
